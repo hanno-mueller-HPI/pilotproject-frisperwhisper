@@ -1,0 +1,1724 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 1017.127 
+tiers? <exists> 
+size = 2 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "spk1" 
+        xmin = 0 
+        xmax = 1017.127 
+        intervals: size = 95 
+        intervals [1]:
+            xmin = 0 
+            xmax = 32.596 
+            text = "" 
+        intervals [2]:
+            xmin = 32.596 
+            xmax = 33.289 
+            text = "m-hm" 
+        intervals [3]:
+            xmin = 33.289 
+            xmax = 39.192 
+            text = "" 
+        intervals [4]:
+            xmin = 39.192 
+            xmax = 39.764 
+            text = "à Beethoven" 
+        intervals [5]:
+            xmin = 39.764 
+            xmax = 42.087 
+            text = "" 
+        intervals [6]:
+            xmin = 42.087 
+            xmax = 42.52 
+            text = "ah c' est c' est sympa" 
+        intervals [7]:
+            xmin = 42.52 
+            xmax = 47.012 
+            text = "" 
+        intervals [8]:
+            xmin = 47.012 
+            xmax = 47.411 
+            text = "ah très bien" 
+        intervals [9]:
+            xmin = 47.411 
+            xmax = 47.968 
+            text = "" 
+        intervals [10]:
+            xmin = 47.968 
+            xmax = 50.868 
+            text = "ah vous savez j' ai fait une partie de mes études à Bonn" 
+        intervals [11]:
+            xmin = 50.868 
+            xmax = 52.467 
+            text = "et là c' est une des villes" 
+        intervals [12]:
+            xmin = 52.467 
+            xmax = 55.355 
+            text = "" 
+        intervals [13]:
+            xmin = 55.355 
+            xmax = 55.887 
+            text = "ah vous aimez bien la musique hein" 
+        intervals [14]:
+            xmin = 55.887 
+            xmax = 59.425 
+            text = "" 
+        intervals [15]:
+            xmin = 59.425 
+            xmax = 63.754 
+            text = "et comme ça vous avez parlé dé() déjà de la vue la santé ça va ?" 
+        intervals [16]:
+            xmin = 63.754 
+            xmax = 100.438 
+            text = "" 
+        intervals [17]:
+            xmin = 100.438 
+            xmax = 101.206 
+            text = "depuis quelle année vous êtes là" 
+        intervals [18]:
+            xmin = 101.206 
+            xmax = 121.642 
+            text = "" 
+        intervals [19]:
+            xmin = 121.642 
+            xmax = 122.994 
+            text = "et la mémoire ça va" 
+        intervals [20]:
+            xmin = 122.994 
+            xmax = 177.103 
+            text = "" 
+        intervals [21]:
+            xmin = 177.103 
+            xmax = 180.033 
+            text = "et ah ah oui et vous vous plaisez ici à Orléans" 
+        intervals [22]:
+            xmin = 180.033 
+            xmax = 181.587 
+            text = "vous avez suivi la fête de Jeanne d' Arc" 
+        intervals [23]:
+            xmin = 181.587 
+            xmax = 183.42 
+            text = "XXX" 
+        intervals [24]:
+            xmin = 183.42 
+            xmax = 205.262 
+            text = "" 
+        intervals [25]:
+            xmin = 205.262 
+            xmax = 206.356 
+            text = "oui oui ça" 
+        intervals [26]:
+            xmin = 206.356 
+            xmax = 221.476 
+            text = "" 
+        intervals [27]:
+            xmin = 221.476 
+            xmax = 223.311 
+            text = "et aujourd'hui c' était aussi l' église pour euh" 
+        intervals [28]:
+            xmin = 223.311 
+            xmax = 224.564 
+            text = "XX service" 
+        intervals [29]:
+            xmin = 224.564 
+            xmax = 240.197 
+            text = "" 
+        intervals [30]:
+            xmin = 240.197 
+            xmax = 240.857 
+            text = "ah c' est bien" 
+        intervals [31]:
+            xmin = 240.857 
+            xmax = 241.754 
+            text = "" 
+        intervals [32]:
+            xmin = 241.754 
+            xmax = 244.08 
+            text = "oui euh donc vous vous êtes bien ici" 
+        intervals [33]:
+            xmin = 244.08 
+            xmax = 247.607 
+            text = "il y a aussi des voisins pour prendre un café hein" 
+        intervals [34]:
+            xmin = 247.607 
+            xmax = 250.425 
+            text = "" 
+        intervals [35]:
+            xmin = 250.425 
+            xmax = 251.192 
+            text = "et la famille aussi" 
+        intervals [36]:
+            xmin = 251.192 
+            xmax = 258.003 
+            text = "" 
+        intervals [37]:
+            xmin = 258.003 
+            xmax = 258.751 
+            text = "c' est gentil (rir)" 
+        intervals [38]:
+            xmin = 258.751 
+            xmax = 262.149 
+            text = "" 
+        intervals [39]:
+            xmin = 262.149 
+            xmax = 264.943 
+            text = "vous avez fait toute la vie à Orléans" 
+        intervals [40]:
+            xmin = 264.943 
+            xmax = 267.713 
+            text = "les amitiés ça existent toujours hein" 
+        intervals [41]:
+            xmin = 267.713 
+            xmax = 304.014 
+            text = "" 
+        intervals [42]:
+            xmin = 304.014 
+            xmax = 305.275 
+            text = "je vois le" 
+        intervals [43]:
+            xmin = 305.275 
+            xmax = 305.946 
+            text = "toute l' installation là" 
+        intervals [44]:
+            xmin = 305.946 
+            xmax = 321.733 
+            text = "" 
+        intervals [45]:
+            xmin = 321.733 
+            xmax = 322.692 
+            text = "c' est le" 
+        intervals [46]:
+            xmin = 322.692 
+            xmax = 325.646 
+            text = "vous intéresse euh surtout ça" 
+        intervals [47]:
+            xmin = 325.646 
+            xmax = 326.613 
+            text = "Internet vous utilisez aussi" 
+        intervals [48]:
+            xmin = 326.613 
+            xmax = 352.473 
+            text = "" 
+        intervals [49]:
+            xmin = 352.473 
+            xmax = 357.87 
+            text = "et pendant votre vie active vous avez fait partie d' une association" 
+        intervals [50]:
+            xmin = 357.87 
+            xmax = 360.645 
+            text = "à la jeunesse des scouts des choses comme ça" 
+        intervals [51]:
+            xmin = 360.645 
+            xmax = 383.415 
+            text = "" 
+        intervals [52]:
+            xmin = 383.415 
+            xmax = 388.175 
+            text = "oui oui et je vois euh oui la grande télévision ça vous avez dit" 
+        intervals [53]:
+            xmin = 388.175 
+            xmax = 388.653 
+            text = "radio aussi ?" 
+        intervals [54]:
+            xmin = 388.653 
+            xmax = 429.436 
+            text = "" 
+        intervals [55]:
+            xmin = 429.436 
+            xmax = 430.544 
+            text = "ah oui oui" 
+        intervals [56]:
+            xmin = 430.544 
+            xmax = 432.739 
+            text = "ça on va" 
+        intervals [57]:
+            xmin = 432.739 
+            xmax = 437.855 
+            text = "c' était un peu hein les lectures ça je vois quelles sont vos intérêts de lectures" 
+        intervals [58]:
+            xmin = 437.855 
+            xmax = 467.99 
+            text = "" 
+        intervals [59]:
+            xmin = 467.99 
+            xmax = 469.023 
+            text = "oui j' ai bien compris" 
+        intervals [60]:
+            xmin = 469.023 
+            xmax = 472.58 
+            text = "ah ce qui m' intéresse c' est un peu votre impression de Orléans donc que" 
+        intervals [61]:
+            xmin = 472.58 
+            xmax = 475.366 
+            text = "oui oui toujours été ou oui" 
+        intervals [62]:
+            xmin = 475.366 
+            xmax = 476.47 
+            text = "bah" 
+        intervals [63]:
+            xmin = 476.47 
+            xmax = 479.173 
+            text = "" 
+        intervals [64]:
+            xmin = 479.173 
+            xmax = 480.759 
+            text = "ça a" 
+        intervals [65]:
+            xmin = 480.759 
+            xmax = 508.121 
+            text = "" 
+        intervals [66]:
+            xmin = 508.121 
+            xmax = 512.881 
+            text = "et euh pour les gens pour les Orléanais là vous avez aussi des opinions (rir)" 
+        intervals [67]:
+            xmin = 512.881 
+            xmax = 557.034 
+            text = "" 
+        intervals [68]:
+            xmin = 557.034 
+            xmax = 559.841 
+            text = "ah oui c' est vrai" 
+        intervals [69]:
+            xmin = 559.841 
+            xmax = 567.064 
+            text = "et euh un peu sur la langue à votre génération l' éducation euh linguistique était très stricte c' est ça ?" 
+        intervals [70]:
+            xmin = 567.064 
+            xmax = 572.652 
+            text = "" 
+        intervals [71]:
+            xmin = 572.652 
+            xmax = 577.368 
+            text = "oui mais pour le français déjà c' était très stricte la dictée tous les jours" 
+        intervals [72]:
+            xmin = 577.368 
+            xmax = 623.66 
+            text = "" 
+        intervals [73]:
+            xmin = 623.66 
+            xmax = 627.627 
+            text = "et ça compte toujours beaucoup pour vous parler correctement ?" 
+        intervals [74]:
+            xmin = 627.627 
+            xmax = 651.586 
+            text = "" 
+        intervals [75]:
+            xmin = 651.586 
+            xmax = 654.961 
+            text = "un langage de jeunes ça existe à votre avis" 
+        intervals [76]:
+            xmin = 654.961 
+            xmax = 656.177 
+            text = "un langage des jeunes" 
+        intervals [77]:
+            xmin = 656.177 
+            xmax = 681.137 
+            text = "" 
+        intervals [78]:
+            xmin = 681.137 
+            xmax = 685.357 
+            text = "ce que vous vous observez à la télévision par exemple quand il y a des jeunes qui parlent" 
+        intervals [79]:
+            xmin = 685.357 
+            xmax = 687.675 
+            text = "là vous trouvez que c' est un autre langage" 
+        intervals [80]:
+            xmin = 687.675 
+            xmax = 741.683 
+            text = "" 
+        intervals [81]:
+            xmin = 741.683 
+            xmax = 745.344 
+            text = "et euh la la politique ça vous pensez que ça" 
+        intervals [82]:
+            xmin = 745.344 
+            xmax = 770.46 
+            text = "" 
+        intervals [83]:
+            xmin = 770.46 
+            xmax = 775.08 
+            text = "et les les gens de votre génération ça va v() comment vous percevez cette" 
+        intervals [84]:
+            xmin = 775.08 
+            xmax = 784.931 
+            text = "" 
+        intervals [85]:
+            xmin = 784.931 
+            xmax = 793.646 
+            text = "et votre la génération la votre génération de des gens à votre âge comparé avec la situation des jeunes qu' est-ce que vous en pensez" 
+        intervals [86]:
+            xmin = 793.646 
+            xmax = 816.05 
+            text = "" 
+        intervals [87]:
+            xmin = 816.05 
+            xmax = 817.992 
+            text = "et euh le futur c' est quoi" 
+        intervals [88]:
+            xmin = 817.992 
+            xmax = 944.565 
+            text = "" 
+        intervals [89]:
+            xmin = 944.565 
+            xmax = 944.916 
+            text = "ah bon" 
+        intervals [90]:
+            xmin = 944.916 
+            xmax = 971.895 
+            text = "" 
+        intervals [91]:
+            xmin = 971.895 
+            xmax = 972.56 
+            text = "une conclusion" 
+        intervals [92]:
+            xmin = 972.56 
+            xmax = 1011.944 
+            text = "" 
+        intervals [93]:
+            xmin = 1011.944 
+            xmax = 1013.595 
+            text = "je re() vous remercie beaucoup" 
+        intervals [94]:
+            xmin = 1013.595 
+            xmax = 1016.329 
+            text = "" 
+        intervals [95]:
+            xmin = 1016.329 
+            xmax = 1017.127 
+            text = "non c' est ça" 
+    item [2]:
+        class = "IntervalTier" 
+        name = "spk2" 
+        xmin = 0 
+        xmax = 1017.127 
+        intervals: size = 331 
+        intervals [1]:
+            xmin = 0 
+            xmax = 29.858 
+            text = "(buzz) anon (buzz)" 
+        intervals [2]:
+            xmin = 29.858 
+            xmax = 32.596 
+            text = "ah oui moi quand on quand on me parle de l' Allemagne je vais vous dire" 
+        intervals [3]:
+            xmin = 32.596 
+            xmax = 33.289 
+            text = "" 
+        intervals [4]:
+            xmin = 33.289 
+            xmax = 37.460 
+            text = "ben quand je pense à l' Allemagne je pense à un musicien que j' aime beaucoup" 
+        intervals [5]:
+            xmin = 37.460 
+            xmax = 39.192 
+            text = "à le je pense à Beethoven" 
+        intervals [6]:
+            xmin = 39.192 
+            xmax = 39.764 
+            text = "" 
+        intervals [7]:
+            xmin = 39.764 
+            xmax = 42.087 
+            text = "quand on parle de l' Allemagne moi je pense à Beethoven" 
+        intervals [8]:
+            xmin = 42.087 
+            xmax = 42.52 
+            text = "" 
+        intervals [9]:
+            xmin = 42.52 
+            xmax = 45.003 
+            text = "né en né en mille-sept-cent-soixante-dix" 
+        intervals [10]:
+            xmin = 45.003 
+            xmax = 47.012 
+            text = "mort mille-huit-cent-vingt-sept" 
+        intervals [11]:
+            xmin = 47.012 
+            xmax = 47.411 
+            text = "" 
+        intervals [12]:
+            xmin = 47.411 
+            xmax = 47.968 
+            text = "voilà" 
+        intervals [13]:
+            xmin = 47.968 
+            xmax = 50.868 
+            text = "" 
+        intervals [14]:
+            xmin = 50.868 
+            xmax = 52.467 
+            text = "ah oui c' est la ville" 
+        intervals [15]:
+            xmin = 52.467 
+            xmax = 55.355 
+            text = "de naissance de Beethoven oui oui oui" 
+        intervals [16]:
+            xmin = 55.355 
+            xmax = 55.887 
+            text = "" 
+        intervals [17]:
+            xmin = 55.887 
+            xmax = 59.425 
+            text = "ah oui oui oui oui (pau) oui" 
+        intervals [18]:
+            xmin = 59.425 
+            xmax = 63.754 
+            text = "" 
+        intervals [19]:
+            xmin = 63.754 
+            xmax = 65.92 
+            text = "non ah non non pas vraiment (bou)" 
+        intervals [20]:
+            xmin = 65.92 
+            xmax = 67.03 
+            text = "écoutez voilà" 
+        intervals [21]:
+            xmin = 67.03 
+            xmax = 69.205 
+            text = "je suis X maladie qui se guérit pas" 
+        intervals [22]:
+            xmin = 69.205 
+            xmax = 71.427 
+            text = "ça s' appelle la polyarthrite rhumatoïde" 
+        intervals [23]:
+            xmin = 71.427 
+            xmax = 73.379 
+            text = "j' ai toutes les articulations déformées" 
+        intervals [24]:
+            xmin = 73.379 
+            xmax = 75.266 
+            text = "aux pieds c' est pareil bon" 
+        intervals [25]:
+            xmin = 75.266 
+            xmax = 78.029 
+            text = "je suis déprimé (pau) hein (pau) je suis déprimé" 
+        intervals [26]:
+            xmin = 78.029 
+            xmax = 81.715 
+            text = "alors j' ai je suis euh j' ai de l' ostéoporose" 
+        intervals [27]:
+            xmin = 81.715 
+            xmax = 83.726 
+            text = "j' ai les os très fragilisés" 
+        intervals [28]:
+            xmin = 83.726 
+            xmax = 85.529 
+            text = "j' ai des os fragiles comme du verre" 
+        intervals [29]:
+            xmin = 85.529 
+            xmax = 87.444 
+            text = "je suis tombée trois fois" 
+        intervals [30]:
+            xmin = 87.444 
+            xmax = 88.704 
+            text = "j' ai eu trois factures" 
+        intervals [31]:
+            xmin = 88.704 
+            xmax = 95.409 
+            text = "j' ai une fracture au bassin une fracture à la cheville et puis une fracture au genou à la rotule et bon" 
+        intervals [32]:
+            xmin = 95.409 
+            xmax = 98.808 
+            text = "et puis ben depuis que je suis ici je me sens mieux" 
+        intervals [33]:
+            xmin = 98.808 
+            xmax = 100.438 
+            text = "puis d'ab() et et et" 
+        intervals [34]:
+            xmin = 100.438 
+            xmax = 101.206 
+            text = "" 
+        intervals [35]:
+            xmin = 101.206 
+            xmax = 102.307 
+            text = "ah ben ah il y a pas longtemps" 
+        intervals [36]:
+            xmin = 102.307 
+            xmax = 105.214 
+            text = "et je suis arrivé en en en mars deux-mille-dix-huit" 
+        intervals [37]:
+            xmin = 105.214 
+            xmax = 106.897 
+            text = "alors ce qu' il y a je vais vous dire" 
+        intervals [38]:
+            xmin = 106.897 
+            xmax = 109.582 
+            text = "c' est qu' il me fait beaucoup de bien c' est le climat religieux" 
+        intervals [39]:
+            xmin = 109.582 
+            xmax = 114.181 
+            text = "ici ce qui me fait du bien c' est le climat religieux (buzz) anon (buzz)" 
+        intervals [40]:
+            xmin = 114.181 
+            xmax = 116.309 
+            text = "et je participe aux offices voilà" 
+        intervals [41]:
+            xmin = 116.309 
+            xmax = 117.56 
+            text = "c' est ça qui me fait du bien" 
+        intervals [42]:
+            xmin = 117.56 
+            xmax = 118.869 
+            text = "j' ai repris du poids" 
+        intervals [43]:
+            xmin = 118.869 
+            xmax = 121.182 
+            text = "j' ai repris un petit peu de poids voyez" 
+        intervals [44]:
+            xmin = 121.182 
+            xmax = 121.642 
+            text = "oui" 
+        intervals [45]:
+            xmin = 121.642 
+            xmax = 122.994 
+            text = "" 
+        intervals [46]:
+            xmin = 122.994 
+            xmax = 126.172 
+            text = "oh bah vous savez je suis tellement anxieux" 
+        intervals [47]:
+            xmin = 126.172 
+            xmax = 132.282 
+            text = "le médecin a dit (dir) plus anxieux que vous c' est quasiment pas possible ou alors on tomberait fou (dir)" 
+        intervals [48]:
+            xmin = 132.282 
+            xmax = 134.945 
+            text = "non oui je prends des anxiolytiques" 
+        intervals [49]:
+            xmin = 134.945 
+            xmax = 140.595 
+            text = "et alors forcément quand on quand vous prenez des anxiolytiques ça détruit des neurones de du cerveau" 
+        intervals [50]:
+            xmin = 140.595 
+            xmax = 143.439 
+            text = "et on a forcément moins de mémoire voilà" 
+        intervals [51]:
+            xmin = 143.439 
+            xmax = 144.77 
+            text = "on a moins de mémoire mais enfin" 
+        intervals [52]:
+            xmin = 144.77 
+            xmax = 147.855 
+            text = "il y a des choses que je me rappelle bien quand même hein oui oui" 
+        intervals [53]:
+            xmin = 147.855 
+            xmax = 149.384 
+            text = "il y a des choses que je me rappelle bien voyez" 
+        intervals [54]:
+            xmin = 149.384 
+            xmax = 155.52 
+            text = "bon la la date de naissance la date de naissance de Beethoven ça et l' année de sa mort j' ai jamais oublié" 
+        intervals [55]:
+            xmin = 155.52 
+            xmax = 157.176 
+            text = "de j' ai jamais oublié vous voyez" 
+        intervals [56]:
+            xmin = 157.176 
+            xmax = 167.633 
+            text = "je peux vous dire qu' il a composé euh trente-deux sonates seize quatuor à co() à cordes neuf symphonies euh deux messes euh des ouvertures" 
+        intervals [57]:
+            xmin = 167.633 
+            xmax = 169.813 
+            text = "bon il a fait quoi et Fidélio et Léonore" 
+        intervals [58]:
+            xmin = 169.813 
+            xmax = 173.001 
+            text = "oui je connais c' est un c' est l' un des musiciens que je connais le mieux voyez" 
+        intervals [59]:
+            xmin = 173.001 
+            xmax = 177.103 
+            text = "alors quand on parle de l' Allemagne voilà (pau) je pense à à Beethoven" 
+        intervals [60]:
+            xmin = 177.103 
+            xmax = 180.033 
+            text = "" 
+        intervals [61]:
+            xmin = 180.033 
+            xmax = 181.587 
+            text = "ah oui" 
+        intervals [62]:
+            xmin = 181.587 
+            xmax = 183.42 
+            text = "ah euh non non parce que" 
+        intervals [63]:
+            xmin = 183.42 
+            xmax = 185.514 
+            text = "euh vous savez je peux pas rester debout longtemps" 
+        intervals [64]:
+            xmin = 185.514 
+            xmax = 187.878 
+            text = "euh je marche avec une canne voyez" 
+        intervals [65]:
+            xmin = 187.878 
+            xmax = 191.042 
+            text = "j' ai pas d' équilibre (pau) et j' ai pas d' équilibre hein" 
+        intervals [66]:
+            xmin = 191.042 
+            xmax = 192.406 
+            text = "je je tiens pas debout" 
+        intervals [67]:
+            xmin = 192.406 
+            xmax = 194.123 
+            text = "euh je je tiens pas debout facilement" 
+        intervals [68]:
+            xmin = 194.123 
+            xmax = 195.492 
+            text = "j' ai pas d' équilibre" 
+        intervals [69]:
+            xmin = 195.492 
+            xmax = 198.087 
+            text = "non la santé c' est très moyen" 
+        intervals [70]:
+            xmin = 198.087 
+            xmax = 200.126 
+            text = "et j' ai soixante-seize ans voyez-vous" 
+        intervals [71]:
+            xmin = 200.126 
+            xmax = 203.935 
+            text = "il y a des gens ici qui ont quatre-vingt-dix ans qui se portent mieux que moi" 
+        intervals [72]:
+            xmin = 203.935 
+            xmax = 205.262 
+            text = "ça enregistre là ?" 
+        intervals [73]:
+            xmin = 205.262 
+            xmax = 206.356 
+            text = "d'accord oui" 
+        intervals [74]:
+            xmin = 206.356 
+            xmax = 207.995 
+            text = "il y a des j' ai soixante-seize ans" 
+        intervals [75]:
+            xmin = 207.995 
+            xmax = 210.887 
+            text = "mais il y a des gens de quatre-vingt-dix ans qui se portent mieux que moi" 
+        intervals [76]:
+            xmin = 210.887 
+            xmax = 213.994 
+            text = "vous savez l' âge et puis la maladie ça a rien à voir" 
+        intervals [77]:
+            xmin = 213.994 
+            xmax = 216.457 
+            text = "il y a des gens relativement jeunes qui sont malades" 
+        intervals [78]:
+            xmin = 216.457 
+            xmax = 218.592 
+            text = "il y a des gens vieux qui ont meilleure santé" 
+        intervals [79]:
+            xmin = 218.592 
+            xmax = 220.751 
+            text = "mais ça on y peut rien (pau) on y peut rien" 
+        intervals [80]:
+            xmin = 220.751 
+            xmax = 221.476 
+            text = "c' est comme ça" 
+        intervals [81]:
+            xmin = 221.476 
+            xmax = 223.311 
+            text = "" 
+        intervals [82]:
+            xmin = 223.311 
+            xmax = 224.564 
+            text = "ah bah j' étais à la" 
+        intervals [83]:
+            xmin = 224.564 
+            xmax = 225.843 
+            text = "ah bah c' était l' Ascension" 
+        intervals [84]:
+            xmin = 225.843 
+            xmax = 227.839 
+            text = "j' étais à la messe à dix heures trente" 
+        intervals [85]:
+            xmin = 227.839 
+            xmax = 231.499 
+            text = "et cet après-midi il y a l' adoration du Saint-Sacrément à dix-sept heures" 
+        intervals [86]:
+            xmin = 231.499 
+            xmax = 232.371 
+            text = "je vais y aller" 
+        intervals [87]:
+            xmin = 232.371 
+            xmax = 235.846 
+            text = "et à dix-sept heures trente les soeurs vont chanter les vêpres" 
+        intervals [88]:
+            xmin = 235.846 
+            xmax = 236.949 
+            text = "et je vais y aller" 
+        intervals [89]:
+            xmin = 236.949 
+            xmax = 240.197 
+            text = "voyez ce climat religieux me convient bien ici voyez" 
+        intervals [90]:
+            xmin = 240.197 
+            xmax = 240.857 
+            text = "" 
+        intervals [91]:
+            xmin = 240.857 
+            xmax = 241.754 
+            text = "oui" 
+        intervals [92]:
+            xmin = 241.754 
+            xmax = 244.08 
+            text = "" 
+        intervals [93]:
+            xmin = 244.08 
+            xmax = 247.607 
+            text = "oui j' y suis bien oui oui j' y suis bien oui j' y suis bien oui" 
+        intervals [94]:
+            xmin = 247.607 
+            xmax = 248.697 
+            text = "ça va j' y suis bien ici" 
+        intervals [95]:
+            xmin = 248.697 
+            xmax = 250.425 
+            text = "je me plais bien oui oui" 
+        intervals [96]:
+            xmin = 250.425 
+            xmax = 251.192 
+            text = "" 
+        intervals [97]:
+            xmin = 251.192 
+            xmax = 253.614 
+            text = "oui ah oui mon frère va venir voyez bientôt" 
+        intervals [98]:
+            xmin = 253.614 
+            xmax = 255.347 
+            text = "il va venir dans quelques X temps" 
+        intervals [99]:
+            xmin = 255.347 
+            xmax = 258.003 
+            text = "mais enfin bon on va finir le le questionnaire là oui" 
+        intervals [100]:
+            xmin = 258.003 
+            xmax = 258.751 
+            text = "" 
+        intervals [101]:
+            xmin = 258.751 
+            xmax = 260.057 
+            text = "oui on va finir le questionn()" 
+        intervals [102]:
+            xmin = 260.057 
+            xmax = 262.149 
+            text = "oui alors vous avez encore d' autres questions à me poser" 
+        intervals [103]:
+            xmin = 262.149 
+            xmax = 264.943 
+            text = "" 
+        intervals [104]:
+            xmin = 264.943 
+            xmax = 267.713 
+            text = "oui tout tout à Orléans oui oui" 
+        intervals [105]:
+            xmin = 267.713 
+            xmax = 269.837 
+            text = "bon ben les amitiés j' en ai eu étant jeune" 
+        intervals [106]:
+            xmin = 269.837 
+            xmax = 272.377 
+            text = "mais vous savez euh il y en a qui disent que je ne suis pas très vieux" 
+        intervals [107]:
+            xmin = 272.377 
+            xmax = 274.773 
+            text = "moi je me con() moi je me considère comme étant vieux" 
+        intervals [108]:
+            xmin = 274.773 
+            xmax = 279.288 
+            text = "vous savez j' ai des camarades qui sont déjà euh d' école qui sont déjà décédés vous savez" 
+        intervals [109]:
+            xmin = 279.288 
+            xmax = 280.439 
+            text = "puis on se perd de vue" 
+        intervals [110]:
+            xmin = 280.439 
+            xmax = 282.668 
+            text = "avec les années on se perd de vue vous savez" 
+        intervals [111]:
+            xmin = 282.668 
+            xmax = 287.01 
+            text = "des camarades d' école j' en ai j' en vois pratiquement presque plus maintenant hein" 
+        intervals [112]:
+            xmin = 287.01 
+            xmax = 288.927 
+            text = "et puis j' ai quitté l' école de bonne heure hein" 
+        intervals [113]:
+            xmin = 288.927 
+            xmax = 290.851 
+            text = "j' ai quitté l' école à quatorze ans" 
+        intervals [114]:
+            xmin = 290.851 
+            xmax = 292.504 
+            text = "alors donc euh" 
+        intervals [115]:
+            xmin = 292.504 
+            xmax = 294.71 
+            text = "mais c'est-à-dire je suis un petit peu autodidacte" 
+        intervals [116]:
+            xmin = 294.71 
+            xmax = 298.971 
+            text = "j' ai essayé d' apprendre par moi-même euh beaucoup de choses voyez voyez" 
+        intervals [117]:
+            xmin = 298.971 
+            xmax = 302.144 
+            text = "bon Beethoven il m' a toute de suite fasciné ce musicien-là voyez" 
+        intervals [118]:
+            xmin = 302.144 
+            xmax = 304.014 
+            text = "voyez c' est un musicien hors du commun" 
+        intervals [119]:
+            xmin = 304.014 
+            xmax = 305.275 
+            text = "il est un vrai" 
+        intervals [120]:
+            xmin = 305.275 
+            xmax = 305.946 
+            text = "" 
+        intervals [121]:
+            xmin = 305.946 
+            xmax = 309.023 
+            text = "euh voilà oui oui mais c' est ma chaîne de stéréo ça" 
+        intervals [122]:
+            xmin = 309.023 
+            xmax = 312.745 
+            text = "oui j' écoute de la musique là (pau) oui j' écoute de la musique là oui" 
+        intervals [123]:
+            xmin = 312.745 
+            xmax = 315.144 
+            text = "ah ben oui Beethoven Beethoven il y en a eu un" 
+        intervals [124]:
+            xmin = 315.144 
+            xmax = 316.623 
+            text = "mais il y en aura pas deux hein" 
+        intervals [125]:
+            xmin = 316.623 
+            xmax = 320.889 
+            text = "il il il était unique hein il était unique oui oui" 
+        intervals [126]:
+            xmin = 320.889 
+            xmax = 321.733 
+            text = "voyez qu' est-ce-que vous voulez" 
+        intervals [127]:
+            xmin = 321.733 
+            xmax = 322.692 
+            text = "me demander encore" 
+        intervals [128]:
+            xmin = 322.692 
+            xmax = 326.613 
+            text = "" 
+        intervals [129]:
+            xmin = 326.613 
+            xmax = 328.497 
+            text = "ah non j' ai pas de non non" 
+        intervals [130]:
+            xmin = 328.497 
+            xmax = 329.106 
+            text = "j' ai pas de" 
+        intervals [131]:
+            xmin = 329.106 
+            xmax = 330.722 
+            text = "bah ça ça ça coûte cher vous savez" 
+        intervals [132]:
+            xmin = 330.722 
+            xmax = 331.757 
+            text = "ça fait des frais" 
+        intervals [133]:
+            xmin = 331.757 
+            xmax = 334.361 
+            text = "vous savez j' ai une pe() j' ai pe() j' ai une petite retraite" 
+        intervals [134]:
+            xmin = 334.361 
+            xmax = 337.614 
+            text = "je suis (buzz) anon (buzz) là parce que j' ai une petite retraite comprenez" 
+        intervals [135]:
+            xmin = 337.614 
+            xmax = 338.408 
+            text = "alors je peux pas faire" 
+        intervals [136]:
+            xmin = 338.408 
+            xmax = 340.581 
+            text = "j' ai un budget très très serré" 
+        intervals [137]:
+            xmin = 340.581 
+            xmax = 342.786 
+            text = "faut que je fasse très attention à tout" 
+        intervals [138]:
+            xmin = 342.786 
+            xmax = 344.286 
+            text = "alors euh non j' ai pas Internet" 
+        intervals [139]:
+            xmin = 344.286 
+            xmax = 346.659 
+            text = "non non j' ai non non j' ai une chaîne stéréo" 
+        intervals [140]:
+            xmin = 346.659 
+            xmax = 347.992 
+            text = "j' écoute de la musique" 
+        intervals [141]:
+            xmin = 347.992 
+            xmax = 352.473 
+            text = "et puis euh j' ai la la télé la télé hein voilà oui" 
+        intervals [142]:
+            xmin = 352.473 
+            xmax = 357.87 
+            text = "" 
+        intervals [143]:
+            xmin = 357.87 
+            xmax = 360.645 
+            text = "oh oh" 
+        intervals [144]:
+            xmin = 360.645 
+            xmax = 364.231 
+            text = "euh oh ben je oui j' étais X j' allais au patronage autrefois" 
+        intervals [145]:
+            xmin = 364.231 
+            xmax = 365.861 
+            text = "oui j' allais au au patronage" 
+        intervals [146]:
+            xmin = 365.861 
+            xmax = 367.625 
+            text = "et puis j' étais enfant de choeur autrefois" 
+        intervals [147]:
+            xmin = 367.625 
+            xmax = 371.929 
+            text = "j' étais enfant de choeur depuis de l' â() depuis l' âge de six ans jusqu' à quatorze ans" 
+        intervals [148]:
+            xmin = 371.929 
+            xmax = 374.587 
+            text = "et je servais la messe à l' église" 
+        intervals [149]:
+            xmin = 374.587 
+            xmax = 376.694 
+            text = "voyez je ça me plaisait bien d' être enfant de choeur" 
+        intervals [150]:
+            xmin = 376.694 
+            xmax = 383.415 
+            text = "je j' allais aussi aux enterrements aux mariages aux baptêmes voyez" 
+        intervals [151]:
+            xmin = 383.415 
+            xmax = 388.653 
+            text = "" 
+        intervals [152]:
+            xmin = 388.653 
+            xmax = 392.062 
+            text = "oui oui la télé une une chaîne haute fidélité que j' ai là voyez" 
+        intervals [153]:
+            xmin = 392.062 
+            xmax = 394.638 
+            text = "ah ben là là c' est c' est c' est des chants de moines" 
+        intervals [154]:
+            xmin = 394.638 
+            xmax = 422.804 
+            text = "(buzz) anon (buzz)" 
+        intervals [155]:
+            xmin = 422.804 
+            xmax = 427.295 
+            text = "ah ben non ça je je ça je prends mon temps de ce qui vous de ce que je dis hein" 
+        intervals [156]:
+            xmin = 427.295 
+            xmax = 429.436 
+            text = "di() di() dites-moi si on peut faire un peu vite ben" 
+        intervals [157]:
+            xmin = 429.436 
+            xmax = 430.544 
+            text = "s' il vous plaît" 
+        intervals [158]:
+            xmin = 430.544 
+            xmax = 432.739 
+            text = "si vous me faire si on peut faire un petit peu vite" 
+        intervals [159]:
+            xmin = 432.739 
+            xmax = 437.855 
+            text = "oui (pau) oui oui oui ah ben lecture" 
+        intervals [160]:
+            xmin = 437.855 
+            xmax = 441.109 
+            text = "ah oh ben vous savez je dois vous dire j' ai été opéré de la cataracte et" 
+        intervals [161]:
+            xmin = 441.109 
+            xmax = 444.166 
+            text = "et de lire ça me fatigue les les yeux" 
+        intervals [162]:
+            xmin = 444.166 
+            xmax = 447.267 
+            text = "alors je peux pas lire beaucoup (pau) hein (pau) je peux pas lire beaucoup eh ben" 
+        intervals [163]:
+            xmin = 447.267 
+            xmax = 448.285 
+            text = "là c' est le Prions_en_Eglise" 
+        intervals [164]:
+            xmin = 448.285 
+            xmax = 454.99 
+            text = "ah bah je lis les évangiles (pau) je lis les évangiles voyez (pau) je lis les évangiles et puis voilà voyez" 
+        intervals [165]:
+            xmin = 454.99 
+            xmax = 457.463 
+            text = "là mais j' ai plus telle() ah bah j' ai lu beaucoup lu autrefois" 
+        intervals [166]:
+            xmin = 457.463 
+            xmax = 462.52 
+            text = "mais maintenant je lis beaucoup moins (par)ce ça me fatigue les yeux (pau) hein (pau) ça me fatigue les yeux" 
+        intervals [167]:
+            xmin = 462.52 
+            xmax = 467.218 
+            text = "et depuis que j' ai été opéré de la cataracte les deux yeux alors ça me fatigue les yeux" 
+        intervals [168]:
+            xmin = 467.218 
+            xmax = 467.99 
+            text = "vous voyez" 
+        intervals [169]:
+            xmin = 467.99 
+            xmax = 472.58 
+            text = "" 
+        intervals [170]:
+            xmin = 472.58 
+            xmax = 475.366 
+            text = "vous avez tout tout la vie passé à Orléans" 
+        intervals [171]:
+            xmin = 475.366 
+            xmax = 476.47 
+            text = "X beaucoup changé la ville ?" 
+        intervals [172]:
+            xmin = 476.47 
+            xmax = 479.173 
+            text = "ah oui ça a beaucoup changé ah ben oui oui" 
+        intervals [173]:
+            xmin = 479.173 
+            xmax = 480.759 
+            text = "au pire au mieux" 
+        intervals [174]:
+            xmin = 480.759 
+            xmax = 483.863 
+            text = "oh ben en mieux en mieux la ville a bien été rénovée" 
+        intervals [175]:
+            xmin = 483.863 
+            xmax = 487.908 
+            text = "parce que (pau) pendant la guerre il y a eu beaucoup de destruction hein" 
+        intervals [176]:
+            xmin = 487.908 
+            xmax = 489.658 
+            text = "il y a il y a eu beaucoup de bombardements" 
+        intervals [177]:
+            xmin = 489.658 
+            xmax = 493.52 
+            text = "et alors il y a eu beaucoup de beaucoup d' immeubles qui ont été détruits" 
+        intervals [178]:
+            xmin = 493.52 
+            xmax = 495.549 
+            text = "il y a eu beaucoup de reconstruction" 
+        intervals [179]:
+            xmin = 495.549 
+            xmax = 498.099 
+            text = "remarquez ça a pas été la ville la plus bombardée hein" 
+        intervals [180]:
+            xmin = 498.099 
+            xmax = 502.212 
+            text = "mais il y a quand même beaucoup de dégâts pendant la dernière guerre oui" 
+        intervals [181]:
+            xmin = 502.212 
+            xmax = 508.121 
+            text = "oui oui oui ben ça c' est la ville a évolué (evolve) en mieux la ville a évolue (evolve) en mieux oui" 
+        intervals [182]:
+            xmin = 508.121 
+            xmax = 512.881 
+            text = "" 
+        intervals [183]:
+            xmin = 512.881 
+            xmax = 516.756 
+            text = "oh ben les gens disent que c' est que les Orléanais sont pas très sympathiques mais enfin bon" 
+        intervals [184]:
+            xmin = 516.756 
+            xmax = 517.726 
+            text = "tout ça ça dépend hein" 
+        intervals [185]:
+            xmin = 517.726 
+            xmax = 518.311 
+            text = "c' est variable ah" 
+        intervals [186]:
+            xmin = 518.311 
+            xmax = 519.223 
+            text = "ça dépend hein" 
+        intervals [187]:
+            xmin = 519.223 
+            xmax = 523.441 
+            text = "(de) toute façon comme chacun est différent il y en a qui sont sympathiques il y en a qui le sont moins" 
+        intervals [188]:
+            xmin = 523.441 
+            xmax = 526.407 
+            text = "mais ça ça de de c' est valable pour le monde entier hein" 
+        intervals [189]:
+            xmin = 526.407 
+            xmax = 530.625 
+            text = "il y a chacun a son euh comme chacun est un est est un modèle unique hein" 
+        intervals [190]:
+            xmin = 530.625 
+            xmax = 532.054 
+            text = "on on est chacun unique hein" 
+        intervals [191]:
+            xmin = 532.054 
+            xmax = 534.574 
+            text = "il y a pas deux individus qui se ressemblent hein" 
+        intervals [192]:
+            xmin = 534.574 
+            xmax = 545.285 
+            text = "compte tenu qu' on est tous différents (ren) euh compte tenu qu' on est tous différents bon euh mettons il y a des gens moi je vais trouver sympathiques une autre personne les trouvera moins sympathiques d' autres pas du tout" 
+        intervals [193]:
+            xmin = 545.285 
+            xmax = 549.393 
+            text = "ça c' est variable selon le la perception de chacun hein" 
+        intervals [194]:
+            xmin = 549.393 
+            xmax = 552.183 
+            text = "ben trouver les gens sympathiques ou pas c' est variable hein" 
+        intervals [195]:
+            xmin = 552.183 
+            xmax = 554.513 
+            text = "ça dépend de ça dépend de la personne hein" 
+        intervals [196]:
+            xmin = 554.513 
+            xmax = 557.034 
+            text = "on peut pas (pau) oui (pau) ça dépend" 
+        intervals [197]:
+            xmin = 557.034 
+            xmax = 559.841 
+            text = "oui oui" 
+        intervals [198]:
+            xmin = 559.841 
+            xmax = 567.064 
+            text = "" 
+        intervals [199]:
+            xmin = 567.064 
+            xmax = 572.652 
+            text = "ah oui oui mais mais moi j' ai oui mais moi j' ai pas appris de lan(gue) j' ai pas appris de langues étrangères" 
+        intervals [200]:
+            xmin = 572.652 
+            xmax = 577.368 
+            text = "non le le ah oui ah oui attends oui on v() on v() ah" 
+        intervals [201]:
+            xmin = 577.368 
+            xmax = 582.74 
+            text = "oui de la dictée tous les jours des rédactions des conjugaisons de verbes et tout" 
+        intervals [202]:
+            xmin = 582.74 
+            xmax = 586.97 
+            text = "mais alors comme j' ai un niveau primaire vous comprenez je peux pas dire que je suis très cultivé" 
+        intervals [203]:
+            xmin = 586.97 
+            xmax = 590.427 
+            text = "en ce sens que mais j' ai pas fait beaucoup d' études un un je me" 
+        intervals [204]:
+            xmin = 590.427 
+            xmax = 595.28 
+            text = "mettons un jeune qui passe le bac bon ben forcément il a un niveau il a un meilleur niveau que moi" 
+        intervals [205]:
+            xmin = 595.28 
+            xmax = 597.484 
+            text = "moi j' ai eu un niveau primaire hein" 
+        intervals [206]:
+            xmin = 597.484 
+            xmax = 600.355 
+            text = "et j' ai arrêt() et j' ai arrêté l' école à quatorze ans" 
+        intervals [207]:
+            xmin = 600.355 
+            xmax = 608.73 
+            text = "et encore nos parents autrefois ils arrêtaient l' école à douze ans (pau) parce que autrefois le Certificat_d'études était à douze ans" 
+        intervals [208]:
+            xmin = 608.73 
+            xmax = 614.2 
+            text = "mes parents (pau) et mes grands-parents (pau) ont arrêté l' école à douze ans" 
+        intervals [209]:
+            xmin = 614.2 
+            xmax = 619.484 
+            text = "et quand leurs par() et quand les parents n' avaient pas de moyens vous aviez des enfants qui travaillaient à douze ans" 
+        intervals [210]:
+            xmin = 619.484 
+            xmax = 623.66 
+            text = "moi j' ai commencé à travailler à quatorze ans et demi voyez" 
+        intervals [211]:
+            xmin = 623.66 
+            xmax = 627.627 
+            text = "" 
+        intervals [212]:
+            xmin = 627.627 
+            xmax = 632.894 
+            text = "oui oui bah moi que j' ai pas un français bon je vous dis que je fais bien des fautes d' orthographe hein" 
+        intervals [213]:
+            xmin = 632.894 
+            xmax = 637.267 
+            text = "bon euh bon euh évidemment mais j' ai lu j' ai lu quand même beaucoup hein" 
+        intervals [214]:
+            xmin = 637.267 
+            xmax = 639.245 
+            text = "quand j' étais plus jeune j' ai lu beaucoup" 
+        intervals [215]:
+            xmin = 639.245 
+            xmax = 642.677 
+            text = "maintenant ça m' intéresse moins parce que ça me fatigue les yeux" 
+        intervals [216]:
+            xmin = 642.677 
+            xmax = 647.081 
+            text = "non maintenant j' écoute la j' écoute beaucoup de musique classique" 
+        intervals [217]:
+            xmin = 647.081 
+            xmax = 651.586 
+            text = "et puis le je regarde la télévision voyez oui" 
+        intervals [218]:
+            xmin = 651.586 
+            xmax = 654.961 
+            text = "" 
+        intervals [219]:
+            xmin = 654.961 
+            xmax = 656.177 
+            text = "oui oui" 
+        intervals [220]:
+            xmin = 656.177 
+            xmax = 664.813 
+            text = "bah oui mais vous savez comme j' ai pas fréquenté de d' enseignement se() euh univers secondaire et universitaire la mentalité des jeunes je connais pas bien vous savez" 
+        intervals [221]:
+            xmin = 664.813 
+            xmax = 668.582 
+            text = "autrefois vous savez on n' était pas on était obéissant si on peut dire" 
+        intervals [222]:
+            xmin = 668.582 
+            xmax = 672.378 
+            text = "on avait pas des fortes têtes comme certains jeunes maintenant sans doute hein hein" 
+        intervals [223]:
+            xmin = 672.378 
+            xmax = 677.102 
+            text = "mais (pau) moi les jeunes vous savez je vous dis j' ai pas suivi des longues études alors euh" 
+        intervals [224]:
+            xmin = 677.102 
+            xmax = 678.984 
+            text = "je peux pas pouv(oir) je peux pas trop vous parler de ça hein" 
+        intervals [225]:
+            xmin = 678.984 
+            xmax = 681.137 
+            text = "moi je sais pas trop hein non" 
+        intervals [226]:
+            xmin = 681.137 
+            xmax = 687.675 
+            text = "" 
+        intervals [227]:
+            xmin = 687.675 
+            xmax = 692.607 
+            text = "oui ben oui oui ça dépend des ça dépend oui ça dépend" 
+        intervals [228]:
+            xmin = 692.607 
+            xmax = 697.617 
+            text = "enfin les jeunes bon ben il y a des grèves (tREv) à l' université en ce moment (pau) en France il y a des grèves hein" 
+        intervals [229]:
+            xmin = 697.617 
+            xmax = 701.328 
+            text = "alors bah qu' est-ce que vous voulez oui" 
+        intervals [230]:
+            xmin = 701.328 
+            xmax = 704.335 
+            text = "ben c' est c'est-à-dire moi je trouve que les jeunes ils ont trop de confort" 
+        intervals [231]:
+            xmin = 704.335 
+            xmax = 706.869 
+            text = "je je trouve que les jeunes ils ont trop de confort" 
+        intervals [232]:
+            xmin = 708.608 
+            xmax = 714.335 
+            text = "parce que vous savez nos parents et puis mes grands-pa(rents) et puis mes grands-parents autrefois il y avait aucun co() aucun confort" 
+        intervals [233]:
+            xmin = 714.335 
+            xmax = 718.352 
+            text = "et j' ai bien l' impression qu' ils étaient quasiment plus heureux sans confort" 
+        intervals [234]:
+            xmin = 718.352 
+            xmax = 725.302 
+            text = "il y avait pas de salle de bains pas d' eau chaude hein euh c' était pas ils avaient pas de confort hein oui" 
+        intervals [235]:
+            xmin = 725.302 
+            xmax = 729.517 
+            text = "je sais pas le oui mais enfin la modernité oui bon c' est bien d' un côté mais enfin" 
+        intervals [236]:
+            xmin = 729.517 
+            xmax = 732.42 
+            text = "oui et non hein ça dépend ça dépend" 
+        intervals [237]:
+            xmin = 732.42 
+            xmax = 733.994 
+            text = "les gens ils ont trop de facilité" 
+        intervals [238]:
+            xmin = 733.994 
+            xmax = 741.683 
+            text = "la la vie a un peu pour certains la vie est trop facile (pau) pour cer() pour certaines personnes euh la vie est trop facile (pau) oui" 
+        intervals [239]:
+            xmin = 741.683 
+            xmax = 745.344 
+            text = "" 
+        intervals [240]:
+            xmin = 745.344 
+            xmax = 749.565 
+            text = "ah ben la politique oui ça m' intéresse oui oui oui oui" 
+        intervals [241]:
+            xmin = 749.565 
+            xmax = 751.731 
+            text = "bah la Macron c' était inattendu hein" 
+        intervals [242]:
+            xmin = 751.731 
+            xmax = 754.241 
+            text = "on pensait pas qu' il aurait été élu président hein" 
+        intervals [243]:
+            xmin = 754.241 
+            xmax = 757.611 
+            text = "(rac) il a été extraordinaire hein on parlait pas de lui voilà deux ans" 
+        intervals [244]:
+            xmin = 757.611 
+            xmax = 759.017 
+            text = "il a fondé un parti" 
+        intervals [245]:
+            xmin = 759.017 
+            xmax = 761.147 
+            text = "ni de dr(oite) ni de droite ni de gauche" 
+        intervals [246]:
+            xmin = 761.147 
+            xmax = 763.691 
+            text = "et il a trouvé le moyen d' être élu président" 
+        intervals [247]:
+            xmin = 763.691 
+            xmax = 770.46 
+            text = "alors c' est qu' il est un c' est vraiment un homme qui sort de l' ordinaire ça oui ah oui oui oui" 
+        intervals [248]:
+            xmin = 770.46 
+            xmax = 775.08 
+            text = "" 
+        intervals [249]:
+            xmin = 775.08 
+            xmax = 777.298 
+            text = "ben vous savez j' en fréquente pas tellement dans le fond" 
+        intervals [250]:
+            xmin = 777.298 
+            xmax = 780.345 
+            text = "savez surtout m() les gens ne me fréquente pas trop hein" 
+        intervals [251]:
+            xmin = 780.345 
+            xmax = 783.149 
+            text = "(ren) je sais pas ce qu' ils pensent vous savez je sais pas" 
+        intervals [252]:
+            xmin = 783.149 
+            xmax = 784.931 
+            text = "je sais pas vous dire" 
+        intervals [253]:
+            xmin = 784.931 
+            xmax = 793.646 
+            text = "" 
+        intervals [254]:
+            xmin = 793.646 
+            xmax = 795.481 
+            text = "ben savez je sais pas bon je côtoie" 
+        intervals [255]:
+            xmin = 795.481 
+            xmax = 798.484 
+            text = "des des gens de mon âge j' en vois pas tellement dans le fond" 
+        intervals [256]:
+            xmin = 798.484 
+            xmax = 800.802 
+            text = "et puis (pi) alors ici les gens sont plus âgés que moi" 
+        intervals [257]:
+            xmin = 800.802 
+            xmax = 803.851 
+            text = "à la maison de retraite il y a pas longtemps que je suis ici" 
+        intervals [258]:
+            xmin = 803.851 
+            xmax = 806.05 
+            text = "et puis (pi) les gens sont beaucoup plus âgés que moi" 
+        intervals [259]:
+            xmin = 806.05 
+            xmax = 811.326 
+            text = "hein il y a des personnes qui n' ont pas moins de c() qui n' ont pas loin de cent ans ici hein alors euh" 
+        intervals [260]:
+            xmin = 813.189 
+            xmax = 816.05 
+            text = "voyez oui oui" 
+        intervals [261]:
+            xmin = 816.05 
+            xmax = 817.992 
+            text = "" 
+        intervals [262]:
+            xmin = 817.992 
+            xmax = 823.594 
+            text = "ah ben le futur vous savez le futur je le je vous savez j' y pense pas tellement hein" 
+        intervals [263]:
+            xmin = 823.594 
+            xmax = 825.567 
+            text = "moi je me figure que je vais bientôt mourir" 
+        intervals [264]:
+            xmin = 825.567 
+            xmax = 826.754 
+            text = "oh ben oui" 
+        intervals [265]:
+            xmin = 826.754 
+            xmax = 831.143 
+            text = "parce que mes parents dans ma famille proche ils sont tous morts avant quatre-vingt" 
+        intervals [266]:
+            xmin = 831.143 
+            xmax = 834.093 
+            text = "alors je suis rentrée dans ma soixante-dix-septième année" 
+        intervals [267]:
+            xmin = 834.093 
+            xmax = 837.259 
+            text = "maman qui est là elle est décédée elle avait cinquante-quatre ans" 
+        intervals [268]:
+            xmin = 837.259 
+            xmax = 839.978 
+            text = "mon père il est décédé il avait soixante-dix-sept ans" 
+        intervals [269]:
+            xmin = 839.978 
+            xmax = 842.093 
+            text = "ils sont tous morts avant quatre-vingt" 
+        intervals [270]:
+            xmin = 842.093 
+            xmax = 848.344 
+            text = "alors moi étant dans rentré dans ma soixante-dix-septième année alors je me dis moi que j' en ai plus pour longtemps" 
+        intervals [271]:
+            xmin = 848.344 
+            xmax = 850.398 
+            text = "j' ai l' impression que je vais bientôt mourir moi" 
+        intervals [272]:
+            xmin = 850.398 
+            xmax = 852.621 
+            text = "et puis vivre vieux ça m' intéresse pas non" 
+        intervals [273]:
+            xmin = 852.621 
+            xmax = 853.996 
+            text = "je vais vous dire pourquoi" 
+        intervals [274]:
+            xmin = 853.996 
+            xmax = 855.22 
+            text = "j' ai pas d' enfants" 
+        intervals [275]:
+            xmin = 855.22 
+            xmax = 859.121 
+            text = "les gens qui ont des enfants des petits-enfants ils veulent les voir grandir" 
+        intervals [276]:
+            xmin = 859.121 
+            xmax = 860.473 
+            text = "mais moi j' en ai pas" 
+        intervals [277]:
+            xmin = 860.473 
+            xmax = 861.547 
+            text = "bon une part" 
+        intervals [278]:
+            xmin = 861.547 
+            xmax = 872.092 
+            text = "et d' autre part compte tenu que j' ai une petite retraite le gros problème les gens qui vivent très vieux leur re(traite) leur retraite elle va dev() elle va être insuffisante" 
+        intervals [279]:
+            xmin = 872.092 
+            xmax = 873.747 
+            text = "comment qu' ils vont faire pour vivre ?" 
+        intervals [280]:
+            xmin = 873.747 
+            xmax = 878.287 
+            text = "des gens qui ça fait des gens que ça fait trente ou quarante ans qu' ils sont à la retraite" 
+        intervals [281]:
+            xmin = 878.287 
+            xmax = 882.275 
+            text = "leur retraite la retraite de départ qu' ils ont eu mettons voilà trente ans" 
+        intervals [282]:
+            xmin = 882.275 
+            xmax = 886.23 
+            text = "quand ils arrivent au jour d' aujourd'hui leur retraite est pas suffisante" 
+        intervals [283]:
+            xmin = 886.23 
+            xmax = 888.834 
+            text = "comment qu' ils vont faire pour vivre ces gens-là ?" 
+        intervals [284]:
+            xmin = 888.834 
+            xmax = 892.24 
+            text = "quand vous êtes (buzz) anon (buzz) bon il y a des aides de prévues" 
+        intervals [285]:
+            xmin = 892.24 
+            xmax = 896.494 
+            text = "mais sinon quand vous êtes ailleurs bah vous savez les gens ils auront pas de quoi vivre" 
+        intervals [286]:
+            xmin = 896.494 
+            xmax = 898.46 
+            text = "moi vivre vieux ça m' intéresse pas du tout" 
+        intervals [287]:
+            xmin = 898.46 
+            xmax = 900.244 
+            text = "c' est pas moi qui va décider" 
+        intervals [288]:
+            xmin = 900.244 
+            xmax = 904.441 
+            text = "moi je me mourrais demain ça m' est égal (pau) parce que j' ai pas d' enfants" 
+        intervals [289]:
+            xmin = 904.441 
+            xmax = 905.634 
+            text = "et j' ai pas de petits-enfants" 
+        intervals [290]:
+            xmin = 905.634 
+            xmax = 910.572 
+            text = "donc euh moi vivre euh bon ben je voudrais essayer avoir le moins de douleur possible hein" 
+        intervals [291]:
+            xmin = 910.572 
+            xmax = 914.382 
+            text = "de toute façon maintenant bon ben il y a on fait on fait des calmants aux gens hein" 
+        intervals [292]:
+            xmin = 914.382 
+            xmax = 917.291 
+            text = "quand ils sont très malades il y a des on leur fait des calmants" 
+        intervals [293]:
+            xmin = 917.291 
+            xmax = 921.653 
+            text = "on leur on leur administre (rir) on les mets en sédation profonde X qu' ils souffrent moins" 
+        intervals [294]:
+            xmin = 921.653 
+            xmax = 924.346 
+            text = "mais bon euh moi le futur je sais pas" 
+        intervals [295]:
+            xmin = 924.346 
+            xmax = 926.432 
+            text = "moi le futur je dois vous dire ça m' intéresse pas" 
+        intervals [296]:
+            xmin = 926.432 
+            xmax = 928.24 
+            text = "moi je m' occupe du temps présent" 
+        intervals [297]:
+            xmin = 928.24 
+            xmax = 929.79 
+            text = "moi le futur ça m' intéresse pas" 
+        intervals [298]:
+            xmin = 929.79 
+            xmax = 932.242 
+            text = "je sais pas comment ça comment le futur va être" 
+        intervals [299]:
+            xmin = 932.242 
+            xmax = 934.986 
+            text = "moi de toute façon le futur à mon avis sera mauvais" 
+        intervals [300]:
+            xmin = 934.986 
+            xmax = 936.53 
+            text = "le futur peut pas être bon" 
+        intervals [301]:
+            xmin = 936.53 
+            xmax = 940.525 
+            text = "étant donné tout ce qu' on voit à l' heure actuelle le futur il peut pas être bon" 
+        intervals [302]:
+            xmin = 940.525 
+            xmax = 942.358 
+            text = "à mon avis le futur il sera mauvais" 
+        intervals [303]:
+            xmin = 942.358 
+            xmax = 944.565 
+            text = "ça sera pire que maintenant" 
+        intervals [304]:
+            xmin = 944.565 
+            xmax = 944.916 
+            text = "" 
+        intervals [305]:
+            xmin = 944.916 
+            xmax = 948.074 
+            text = "ah oui ah oui le futur ça ce sera pire que maintenant" 
+        intervals [306]:
+            xmin = 948.074 
+            xmax = 951.456 
+            text = "les gens v() ils essaient faire vivre les gens plus vieux plus vieux" 
+        intervals [307]:
+            xmin = 951.456 
+            xmax = 953.179 
+            text = "mais ça sert à quoi vivre vieux ?" 
+        intervals [308]:
+            xmin = 953.179 
+            xmax = 957.185 
+            text = "ça sert à rien (pau) surtout qu' on vous avez pas d' enfants ni de petits-enfants" 
+        intervals [309]:
+            xmin = 957.185 
+            xmax = 959.522 
+            text = "vivre vieux ça m() ça m' intéresse pas moi" 
+        intervals [310]:
+            xmin = 959.522 
+            xmax = 961.184 
+            text = "vivre vieux ça m' intéresse pas" 
+        intervals [311]:
+            xmin = 961.184 
+            xmax = 963.934 
+            text = "on me dirait (dir) vous allez mourir demain (dir) ça m' est égal" 
+        intervals [312]:
+            xmin = 963.934 
+            xmax = 966.138 
+            text = "moi je vais à la messe tous les matins voilà" 
+        intervals [313]:
+            xmin = 966.138 
+            xmax = 970.383 
+            text = "vous savez si je partais demain ça m' est égal voilà voilà" 
+        intervals [314]:
+            xmin = 970.383 
+            xmax = 971.895 
+            text = "vous avez encore d' autres choses à me demander ?" 
+        intervals [315]:
+            xmin = 971.895 
+            xmax = 972.56 
+            text = "" 
+        intervals [316]:
+            xmin = 972.56 
+            xmax = 973.779 
+            text = "oui oui" 
+        intervals [317]:
+            xmin = 973.779 
+            xmax = 978.708 
+            text = "ben la conclusion bon ben voyez je je vous ai dit franchement ce que ce que je pensais voyez" 
+        intervals [318]:
+            xmin = 978.708 
+            xmax = 981.498 
+            text = "la conclusion bon bah que bah je suis croyant" 
+        intervals [319]:
+            xmin = 981.498 
+            xmax = 984.061 
+            text = "je crois je crois en Dieu voilà" 
+        intervals [320]:
+            xmin = 984.061 
+            xmax = 989.369 
+            text = "et puis j' espère que j' espère qu' après la mort il y a autre chose après la mort hein" 
+        intervals [321]:
+            xmin = 989.369 
+            xmax = 990.974 
+            text = "euh je crois au c() je crois au ciel" 
+        intervals [322]:
+            xmin = 990.974 
+            xmax = 992.033 
+            text = "et je crois au paradis" 
+        intervals [323]:
+            xmin = 992.033 
+            xmax = 997.734 
+            text = "et je crois à une vie je voilà je crois à une vie après la mort voilà voyez c' est ça" 
+        intervals [324]:
+            xmin = 997.734 
+            xmax = 1000.371 
+            text = "c' est ça euh le voilà là c' est l' espérance" 
+        intervals [325]:
+            xmin = 1000.371 
+            xmax = 1003.559 
+            text = "le l' espérance d' une autre vie après la mort voilà" 
+        intervals [326]:
+            xmin = 1003.559 
+            xmax = 1004.72 
+            text = "ça c' est la conclusion" 
+        intervals [327]:
+            xmin = 1004.72 
+            xmax = 1010.488 
+            text = "l' espérance d' une autre vie après la mort qui sera meilleure que la vie actuelle voilà" 
+        intervals [328]:
+            xmin = 1010.488 
+            xmax = 1011.944 
+            text = "" 
+        intervals [329]:
+            xmin = 1011.944 
+            xmax = 1013.595 
+            text = "" 
+        intervals [330]:
+            xmin = 1013.595 
+            xmax = 1016.329 
+            text = "voilà voilà donc c' est anonyme vous citez pas mon nom" 
+        intervals [331]:
+            xmin = 1016.329 
+            xmax = 1017.127 
+            text = "" 

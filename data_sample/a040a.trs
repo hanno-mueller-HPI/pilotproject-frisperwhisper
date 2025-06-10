@@ -1,0 +1,1136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Trans SYSTEM "trans-14.dtd">
+<Trans scribe="LangAge corpora" audio_filename="a040a" version="37" version_date="190328" xml:lang="fr">
+<Speakers>
+<Speaker id="spk1" name="a999" check="no" dialect="nonnative" accent="fr" scope="local" type="female"/>
+<Speaker id="spk2" name="a040" check="no" dialect="native" accent="fr" scope="local" type="male"/>
+</Speakers>
+<Episode program="LangAge 2005" air_date="20050805">
+<Section type="report" startTime="0" endTime="867.907">
+<Turn startTime="0" endTime="13.161" speaker="spk1">
+<Sync time="0"/>
+
+<Event desc="buzz" type="noise" extent="begin"/>
+ anon 
+<Event desc="buzz" type="noise" extent="end"/>
+
+</Turn>
+<Turn speaker="spk2" startTime="13.161" endTime="27.595">
+<Sync time="13.161"/>
+bah euh
+<Sync time="13.64"/>
+
+<Event desc="rir" type="noise" extent="instantaneous"/>
+
+<Sync time="14.722"/>
+c' est difficile comme ça hein 
+<Sync time="16.753"/>
+j' ai pas l' habitude 
+<Sync time="17.753"/>
+
+<Event desc="rir" type="noise" extent="instantaneous"/>
+
+<Sync time="21.633"/>
+je suis issu d' une famille euh 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ euh 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ d' ouvriers 
+</Turn>
+<Turn speaker="spk1" startTime="27.595" endTime="28.336">
+<Sync time="27.595"/>
+m-hm 
+</Turn>
+<Turn speaker="spk2" startTime="28.336" endTime="31.715">
+<Sync time="28.336"/>
+euh au début de la guerre euh donc j' avais six ans 
+</Turn>
+<Turn speaker="spk1" startTime="31.715" endTime="33.6">
+<Sync time="31.715"/>
+m-hm 
+<Sync time="32.113"/>
+
+</Turn>
+<Turn speaker="spk2" startTime="33.6" endTime="49.569">
+<Sync time="33.6"/>
+le jour de la déclaration de guerre j' ai vu mon père arriver en pleurant 
+<Sync time="36.928"/>
+
+<Sync time="42.233"/>
+et 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ et voilà 
+<Sync time="43.966"/>
+
+<Sync time="45.153"/>
+ensuite euh 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ nous avons vécu la Drôle_de_guerre 
+</Turn>
+<Turn speaker="spk1" startTime="49.569" endTime="50.621">
+<Sync time="49.569"/>
+m-hm 
+</Turn>
+<Turn speaker="spk2" startTime="50.621" endTime="64.274">
+<Sync time="50.621"/>
+où la France s' est écroulée 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ combien de temps en huit jours 
+<Sync time="53.195"/>
+
+<Sync time="54.673"/>
+hein à peu près 
+<Sync time="55.248"/>
+
+<Sync time="60.892"/>
+et puis qu' est-ce que vous voulez savoir encore 
+<Sync time="62.891"/>
+
+<Event desc="rir" type="noise" extent="instantaneous"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="64.274" endTime="68.442">
+<Sync time="64.274"/>
+m-hm 
+<Sync time="64.722"/>
+
+</Turn>
+<Turn speaker="spk2" startTime="68.442" endTime="68.793">
+<Sync time="68.442"/>
+ça marche ? 
+</Turn>
+<Turn speaker="spk1" startTime="68.793" endTime="71.668">
+<Sync time="68.793"/>
+XX ça marche 
+<Sync time="70.037"/>
+
+</Turn>
+<Turn speaker="spk2" startTime="71.668" endTime="74.626">
+<Sync time="71.668"/>
+non mais si vous me posez pas des questions je ne saurais pas vous 
+</Turn>
+<Turn speaker="spk1" startTime="74.626" endTime="78.126">
+<Sync time="74.626"/>
+oui la première question c' est toujours ouverte 
+</Turn>
+<Turn speaker="spk2" startTime="78.126" endTime="79.564">
+<Sync time="78.126"/>
+d'accord 
+<Sync time="78.767"/>
+posez des questions 
+</Turn>
+<Turn speaker="spk1" startTime="79.564" endTime="82.439">
+<Sync time="79.564"/>
+et les parents travaillaient quel métier ? 
+</Turn>
+<Turn speaker="spk2" startTime="82.439" endTime="84.907">
+<Sync time="82.439"/>
+euh euh euh ils étaient tailleurs 
+</Turn>
+<Turn speaker="spk1" startTime="84.907" endTime="87.157">
+<Sync time="84.907"/>
+m-hm à Paris quel arrondissement c' était ? 
+</Turn>
+<Turn speaker="spk2" startTime="87.157" endTime="89.070">
+<Sync time="87.157"/>
+dans le le le dix-neuvième
+</Turn>
+<Turn speaker="spk1" startTime="89.070" endTime="92.275">
+<Sync time="89.070"/>
+m-hm 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ et la famille était grande 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ des frères des soeurs ? 
+</Turn>
+<Turn speaker="spk2" startTime="92.275" endTime="95.46">
+<Sync time="92.275"/>
+j' ai un frère 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ mais qui est né le au moins au quarante 
+</Turn>
+<Turn speaker="spk1" startTime="95.46" endTime="95.753">
+<Sync time="95.46"/>
+m-hm 
+</Turn>
+<Turn speaker="spk2" startTime="95.753" endTime="97.571">
+<Sync time="95.753"/>
+il est né pas il est né en quarante hum oui 
+</Turn>
+<Turn speaker="spk1" startTime="97.571" endTime="100.982">
+<Sync time="97.571"/>
+m-hm 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ et l' éducation était très stricte ? 
+</Turn>
+<Turn speaker="spk2" startTime="100.982" endTime="107.404">
+<Sync time="100.982"/>
+non 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ non non très 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ très familiale 
+<Event desc="rir" type="noise" extent="instantaneous"/>
+ très familiale 
+</Turn>
+<Turn speaker="spk1" startTime="107.404" endTime="111.639">
+<Sync time="107.404"/>
+m-hm 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ et les grands-parents qu' est-ce qu' ils travaillaient ? 
+</Turn>
+<Turn speaker="spk2" startTime="111.639" endTime="113.470">
+<Sync time="111.639"/>
+mes grands-parents étaient cordonniers 
+</Turn>
+<Turn speaker="spk1" startTime="113.470" endTime="116.217">
+<Sync time="113.470"/>
+m-hm 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ tout tous à Paris ? 
+</Turn>
+<Turn speaker="spk2" startTime="116.217" endTime="118.370">
+<Sync time="116.217"/>
+oui oui oui 
+<Sync time="116.801"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="118.370" endTime="124.484">
+<Sync time="118.370"/>
+et vous avez des souvenirs des fêtes d' enfance des fêtes en famille ? 
+</Turn>
+<Turn speaker="spk2" startTime="124.484" endTime="137.593">
+<Sync time="124.484"/>
+mais oui c' était toujours des fêtes un petit peu religieuses parce vous je l' ai vous dit l' autre fois 
+<Sync time="128.684"/>
+et c' étaient les fêtes de Hanoucca les fêtes de Pâques euh 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ les souvenirs de ma mon grand-père et de ma grand-mère 
+</Turn>
+<Turn speaker="spk1" startTime="137.593" endTime="140.647">
+<Sync time="137.593"/>
+m-hm 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ on fêtait avec toute la famille ? 
+</Turn>
+<Turn speaker="spk2" startTime="140.647" endTime="142.405">
+<Sync time="140.647"/>
+oui 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ oui oui autour de la table 
+</Turn>
+<Turn speaker="spk1" startTime="142.405" endTime="150.623">
+<Sync time="142.405"/>
+m-hm 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ XXX 
+<Sync time="145.948"/>
+et hum vous des jeux d' enfance c' étaient quels ? 
+</Turn>
+<Turn speaker="spk2" startTime="150.623" endTime="160.762">
+<Sync time="150.623"/>
+mais les jeux d' enfance c' était surtout à l' école euh 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ les osselets 
+<Event desc="rir" type="noise" extent="instantaneous"/>
+ la marelle euh euh ah les patins à roulettes 
+<Sync time="157.959"/>
+oui c' était la grande mode les patins à roulettes 
+</Turn>
+<Turn speaker="spk1" startTime="160.762" endTime="171.728">
+<Sync time="160.762"/>
+m-hm 
+<Sync time="161.241"/>
+
+<Sync time="163.174"/>
+et il y avait des organisations pour les enfants euh comme 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ euh dans l' église catholique il y avait les scouts ? 
+</Turn>
+<Turn speaker="spk2 spk1" startTime="171.728" endTime="174.686">
+<Sync time="171.728"/>
+<Who nb="1"/>
+oui il y avait il y avait les 
+<Who nb="2"/>
+des choses comme ça 
+</Turn>
+<Turn speaker="spk2" startTime="174.686" endTime="179.215">
+<Sync time="174.686"/>
+mais j' en faisais pas partie 
+<Sync time="176.039"/>
+
+<Sync time="177.952"/>
+j' aimais bien le cinéma 
+</Turn>
+<Turn speaker="spk1" startTime="179.215" endTime="180.784">
+<Sync time="179.215"/>
+m-hm déjà 
+</Turn>
+<Turn speaker="spk2" startTime="180.784" endTime="185.437">
+<Sync time="180.784"/>
+le jeudi après-midi on allait au cinéma 
+<Sync time="182.804"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="185.437" endTime="187.862">
+<Sync time="185.437"/>
+et des amitiés à 
+</Turn>
+<Turn speaker="spk2" startTime="187.862" endTime="191.589">
+<Sync time="187.862"/>
+à l' école 
+<Sync time="188.737"/>
+les amitiés d' enfant 
+<Sync time="189.751"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="191.589" endTime="195.204">
+<Sync time="191.589"/>
+et donc la guerre vous l' vous l' avez vécu à Paris au début ? 
+</Turn>
+<Turn speaker="spk2" startTime="195.204" endTime="196.107">
+<Sync time="195.204"/>
+la guerre ? 
+</Turn>
+<Turn speaker="spk1" startTime="196.107" endTime="197.933">
+<Sync time="196.107"/>
+la guerre vous étiez 
+</Turn>
+<Turn speaker="spk2" startTime="197.933" endTime="227.774">
+<Sync time="197.933"/>
+euh à Paris 
+<Sync time="198.652"/>
+
+<Sync time="201.081"/>
+euh mon père euh est parti en donc en trente-neuf 
+<Sync time="205.121"/>
+
+<Sync time="206.307"/>
+il est revenu en quarante 
+<Sync time="207.905"/>
+il a été démobilisé 
+<Sync time="209.666"/>
+
+<Sync time="210.527"/>
+et tout de suite après il y a eu donc les ces histoires 
+<Sync time="213.472"/>
+et 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ et on l' a interné au camp de de Beaune-la-Rolande ici dans le Loiret 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ où il s' est évadé 
+<Sync time="222.798"/>
+
+<Sync time="224.301"/>
+donc il a pas été déporté grâce à ça 
+<Sync time="226.235"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="227.774" endTime="230.37">
+<Sync time="227.774"/>
+et il est revenu 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ après la guerre ? 
+</Turn>
+<Turn speaker="spk2" startTime="230.37" endTime="265.010">
+<Sync time="230.37"/>
+oui oui non mais toute la guerre il y est resté 
+<Sync time="232.951"/>
+on était caché tous ensemble 
+<Sync time="234.625"/>
+on était caché du côté de dans dans le Vercors
+<Sync time="237.223"/>
+il avait choisi le meilleur coin d'ailleurs 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ le Vercors 
+<Sync time="240.855"/>
+
+<Sync time="242.497"/>
+parce que si vous connaissez le Vercors ? 
+<Sync time="244.57"/>
+c' est là il y a eu il y a eu une 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ la plus grosse euh offensive des des Allemands contre le Maquis_du_Vercors
+<Sync time="254.365"/>
+c' était le Plateau_d'Eglière
+<Sync time="256.229"/>
+
+<Sync time="257.618"/>
+et ils ont fait de surtout et la milice française également a fait des grosses atrocités là 
+<Sync time="261.412"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="265.010" endTime="267.113">
+<Sync time="265.010"/>
+et c' était jusqu' à quarante-quatre alors ? 
+</Turn>
+<Turn speaker="spk2" startTime="267.113" endTime="269.043">
+<Sync time="267.113"/>
+oui la Libération 
+</Turn>
+<Turn speaker="spk1" startTime="269.043" endTime="270.87">
+<Sync time="269.043"/>
+vous en avez des souvenirs au jour de 
+</Turn>
+<Turn speaker="spk2 spk1" startTime="270.87" endTime="271.967">
+<Sync time="270.87"/>
+<Who nb="1"/>
+de Libération ?
+<Who nb="2"/>
+la Libération ? 
+</Turn>
+<Turn speaker="spk2" startTime="271.967" endTime="294.612">
+<Sync time="271.967"/>
+oui une grande joie 
+<Sync time="272.851"/>
+
+<Sync time="273.961"/>
+le premier Américain qui est rentré 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ euh on lui a sauté au cou 
+<Sync time="278.286"/>
+on l' a invité à la maison 
+<Event desc="rir" type="noise" extent="instantaneous"/>
+
+<Sync time="280.382"/>
+je je vais vous dire une anecdote 
+<Sync time="282.796"/>
+on avait un coq 
+<Sync time="284.209"/>
+et on l' avait appelé Hitler 
+<Sync time="286.296"/>
+et ben le jour de la Libération 
+<Event desc="rir" type="noise" extent="instantaneous"/>
+ on a égorgé Hitler 
+<Event desc="rir" type="noise" extent="instantaneous"/>
+ avec l' Américain 
+<Sync time="293.069"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="294.612" endTime="296.3">
+<Sync time="294.612"/>
+vous avez mangé avec l' Américain ? 
+</Turn>
+<Turn speaker="spk2" startTime="296.3" endTime="298.925">
+<Sync time="296.3"/>
+oui on a mangé Hitler 
+<Sync time="297.499"/>
+
+</Turn>
+<Turn speaker="spk2" startTime="298.925" endTime="309.794">
+<Sync time="298.925"/>
+
+<Event desc="buzz" type="noise" extent="begin"/>
+ anon 
+<Event desc="buzz" type="noise" extent="end"/>
+
+</Turn>
+<Turn speaker="spk2" startTime="309.794" endTime="327.434">
+<Sync time="309.794"/>
+mais parce qu' on était un peu caché dans une ferme voyez euh 
+<Sync time="313.436"/>
+donc euh 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ on faisait un petit peu de lapin de de quelques poules des choses comme ça 
+<Sync time="319.511"/>
+et on avait un coq euh Hitler 
+<Sync time="321.147"/>
+
+<Sync time="322.457"/>
+mais il était gentil 
+<Sync time="323.147"/>
+venait taper à la fenêtre 
+<Event desc="rir" type="noise" extent="instantaneous"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="327.434" endTime="331.438">
+<Sync time="327.434"/>
+mh toute la toute la famille était là la mère le père et le frère 
+</Turn>
+<Turn speaker="spk2" startTime="331.438" endTime="353.898">
+<Sync time="331.438"/>
+la chance qu' on a eu oui on est resté ensemble 
+<Sync time="334.466"/>
+mais 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ à part les autres qui ont été déportés avant parce que il y a eu 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ ma grand-mère mes oncles mes tantes 
+<Sync time="342.463"/>
+tous ceux-là ils sont partis parce qu' ils étaient pas 
+<Sync time="344.784"/>
+nous on est on est parti 
+<Sync time="346.207"/>
+on s' est enfuit 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ de Paris 
+<Sync time="350.568"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="353.898" endTime="357.966">
+<Sync time="353.898"/>
+et après vous vous êtes revenus là à Paris après la guerre ? 
+</Turn>
+<Turn speaker="spk2" startTime="357.966" endTime="367.804">
+<Sync time="357.966"/>
+oui oui oui 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ on a récupéré notre ancien logement 
+<Sync time="362.012"/>
+et la vie a recommencé 
+<Sync time="363.49"/>
+
+<Sync time="364.682"/>
+mon père s' est remis au travail 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ et voilà 
+</Turn>
+<Turn speaker="spk1" startTime="367.804" endTime="372.117">
+<Sync time="367.804"/>
+m-hm 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ vous étiez à l' école jusqu' à quel âge ? 
+</Turn>
+<Turn speaker="spk2" startTime="372.117" endTime="374.883">
+<Sync time="372.117"/>
+j' ai été à l' école jusqu' à à peu près seize ans 
+</Turn>
+<Turn speaker="spk1" startTime="374.883" endTime="379.855">
+<Sync time="374.883"/>
+m-hm 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ et c' était le Certificat_d'Études ? 
+</Turn>
+<Turn speaker="spk2" startTime="379.855" endTime="381.317">
+<Sync time="379.855"/>
+oui jusqu' au brevet 
+</Turn>
+<Turn speaker="spk1" startTime="381.317" endTime="385.418">
+<Sync time="381.317"/>
+m-hm 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ et après vous avez commencé un 
+</Turn>
+<Turn speaker="spk2" startTime="385.418" endTime="400.777">
+<Sync time="385.418"/>
+après j' ai fait euh j' ai travaillé dans l' atelier de mon père 
+<Sync time="390.496"/>
+ensuite j' ai fait de la comptabilité 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ jusqu' à mes vingt ans 
+<Sync time="396.85"/>
+après je suis parti à l' armée 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ pendant trente mois 
+</Turn>
+<Turn speaker="spk1" startTime="400.777" endTime="402.209">
+<Sync time="400.777"/>
+c' était où l' armée ? 
+</Turn>
+<Turn speaker="spk2" startTime="402.209" endTime="416.098">
+<Sync time="402.209"/>
+en Afrique du nord 
+<Sync time="404.012"/>
+c' était la guerre d' Algérie à l' époque 
+<Sync time="405.489"/>
+
+<Sync time="406.714"/>
+puis je suis revenu 
+<Sync time="407.633"/>
+j' étais arrivé à Orléans 
+<Sync time="409.03"/>
+j' ai rencontré ma femme 
+<Sync time="409.968"/>
+nous (nous) sommes mariés 
+<Sync time="411.355"/>
+et ça fait presque cinquante ans que je suis là 
+<Event desc="rir" type="noise" extent="instantaneous"/>
+
+<Sync time="414.854"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="416.098" endTime="419.263">
+<Sync time="416.098"/>
+et vous avez des enfants XX 
+</Turn>
+<Turn speaker="spk2" startTime="419.263" endTime="422.805">
+<Sync time="419.263"/>
+non mais non XX 
+<Sync time="421.374"/>
+j' ai un garçon et une fille 
+</Turn>
+<Turn speaker="spk1" startTime="422.805" endTime="427.964">
+<Sync time="422.805"/>
+m-hm 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ euh qui travaillent maintenant toujours 
+<Sync time="426.474"/>
+euh qui habitent aussi à Orléans ? 
+</Turn>
+<Turn speaker="spk2" startTime="427.964" endTime="434.945">
+<Sync time="427.964"/>
+non 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ ma fille habite Orléans oui 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ qui est antiquaire 
+<Sync time="432.35"/>
+et mon fils il habite Nantes 
+<Sync time="433.938"/>
+il est dentiste 
+</Turn>
+<Turn speaker="spk1" startTime="434.945" endTime="436.557">
+<Sync time="434.945"/>
+m-hm et des petits-enfants aussi ? 
+</Turn>
+<Turn speaker="spk2" startTime="436.557" endTime="438.981">
+<Sync time="436.557"/>
+oui trois petites-filles 
+<Sync time="437.866"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="438.981" endTime="441.11">
+<Sync time="438.981"/>
+et vous avez beaucoup de contacts avec eux ? 
+</Turn>
+<Turn speaker="spk2" startTime="441.11" endTime="442.219">
+<Sync time="441.11"/>
+ah oui puisque 
+</Turn>
+<Turn speaker="spk1" startTime="442.219" endTime="447.797">
+<Sync time="442.219"/>
+XX 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ et vous étiez aussi très strict dans l' éducation avec euh 
+</Turn>
+<Turn speaker="spk2" startTime="447.797" endTime="472.012">
+<Sync time="447.797"/>
+pas assez 
+<Event desc="rir" type="noise" extent="instantaneous"/>
+ hein pas assez 
+<Event desc="rir" type="noise" extent="instantaneous"/>
+
+<Sync time="451.724"/>
+ils ont fait ce qu' ils ont voulu 
+<Sync time="454.704"/>
+ils non je fais partie des gens qui qui ne sont pas je crois pas méchants n'est-ce-pas 
+<Event desc="buzz" type="noise" extent="begin"/>
+ NPp 
+<Event desc="buzz" type="noise" extent="end"/>
+
+<Sync time="461.359"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="472.012" endTime="477.093">
+<Sync time="472.012"/>
+et 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ avez habité donc à Orléans depuis trente ans 
+</Turn>
+<Turn speaker="spk2" startTime="477.093" endTime="479.196">
+<Sync time="477.093"/>
+ah non depuis mille-neuf-cent-cinquante-sept 
+</Turn>
+<Turn speaker="spk1" startTime="479.196" endTime="480.666">
+<Sync time="479.196"/>
+ah c' est 
+</Turn>
+<Turn speaker="spk2" startTime="480.666" endTime="482.484">
+<Sync time="480.666"/>
+ça fait euh 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="482.484" endTime="483.132">
+<Sync time="482.484"/>
+ça fait plus 
+</Turn>
+<Turn speaker="spk2" startTime="483.132" endTime="485.6">
+<Sync time="483.132"/>
+quarante-huit ans 
+</Turn>
+<Turn speaker="spk1" startTime="485.6" endTime="486.245">
+<Sync time="485.6"/>
+à Orléans centre ? 
+</Turn>
+<Turn speaker="spk2" startTime="486.245" endTime="493.517">
+<Sync time="486.245"/>
+depuis mon mariage 
+<Sync time="487.416"/>
+oui oui oui Orléans centre 
+<Sync time="489.265"/>
+maintenant j' habite à cinq kilomètres d' Orléans 
+<Sync time="491.351"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="493.517" endTime="496.167">
+<Sync time="493.517"/>
+et la votre femme elle travaille aussi ? 
+</Turn>
+<Turn speaker="spk2" startTime="496.167" endTime="503.535">
+<Sync time="496.167"/>
+oui mais elle a X on avait travaillé ensemble 
+<Sync time="498.195"/>
+on avait de la on faisait de la confection 
+<Sync time="500.171"/>
+mais maintenant euh elle est retraitée 
+</Turn>
+<Turn speaker="spk1" startTime="503.535" endTime="507.551">
+<Sync time="503.535"/>
+et vous avez commencé avec euh euh 
+<Event desc="buzz" type="noise" extent="begin"/>
+ NPe 
+<Event desc="buzz" type="noise" extent="end"/>
+ ? 
+</Turn>
+<Turn speaker="spk2" startTime="507.551" endTime="517.047">
+<Sync time="507.551"/>
+oui non mais ça c' était par euh plaisir 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ c' est par plaisir voilà 
+<Sync time="511.678"/>
+une il y a une trentaine d' années j' ai dit 
+<Event desc="dir" type="noise" extent="begin"/>
+ tiens je vais faire ça 
+<Event desc="dir" type="noise" extent="end"/>
+ voilà 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ l' antiquité 
+</Turn>
+<Turn speaker="spk1" startTime="517.047" endTime="521.437">
+<Sync time="517.047"/>
+il existait déjà ou vous avez commencé avec euh 
+</Turn>
+<Turn speaker="spk2" startTime="521.437" endTime="529.447">
+<Sync time="521.437"/>
+non non ça n' existait pas 
+<Sync time="522.758"/>
+euh je l' ai le créé oui 
+<Sync time="523.96"/>
+
+<Sync time="525.809"/>
+oui c' est un bric en brocante hein 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ pour passer le temps 
+</Turn>
+<Turn speaker="spk1" startTime="529.447" endTime="536.212">
+<Sync time="529.447"/>
+m-hm 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ et la vie à Orléans vous aimez bien 
+<Sync time="534.853"/>
+vous avez des amitiés ici ?
+</Turn>
+<Turn speaker="spk2" startTime="536.212" endTime="540.486">
+<Sync time="536.212"/>
+ah oui je connais tout le monde 
+<Sync time="538.662"/>
+tout va bien de ce côté-là 
+</Turn>
+<Turn speaker="spk1" startTime="540.486" endTime="545.44">
+<Sync time="540.486"/>
+et la vie culturelle vous fréquentez théâtre concerts ? 
+</Turn>
+<Turn speaker="spk2" startTime="545.44" endTime="550.008">
+<Sync time="545.44"/>
+je ne suis pas très euh théâtre et concert 
+<Sync time="547.925"/>
+j' aime toujours le cinéma voilà 
+</Turn>
+<Turn speaker="spk1" startTime="550.008" endTime="552.946">
+<Sync time="550.008"/>
+quel type de film vous aimez 
+</Turn>
+<Turn speaker="spk2" startTime="552.946" endTime="564.482">
+<Sync time="552.946"/>
+j' aime le cinéma américain 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ voilà de le cinéma américain des années cinquante soixante 
+<Sync time="559.376"/>
+les Western euh les les films noirs euh Humphrey Bogart 
+</Turn>
+<Turn speaker="spk1" startTime="564.482" endTime="569.943">
+<Sync time="564.482"/>
+m-hm 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ et hum des activités sportives ? 
+</Turn>
+<Turn speaker="spk2" startTime="569.943" endTime="571.943">
+<Sync time="569.943"/>
+aucune 
+<Sync time="570.504"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="571.943" endTime="578.601">
+<Sync time="571.943"/>
+et fréquentez-vous euh quelques clubs euh l' UTL je sais pas des associations 
+</Turn>
+<Turn speaker="spk2" startTime="578.601" endTime="582.494">
+<Sync time="578.601"/>
+non non non XX
+</Turn>
+<Turn speaker="spk1" startTime="582.494" endTime="584.013">
+<Sync time="582.494"/>
+et la radio vous écoutez ? 
+</Turn>
+<Turn speaker="spk2" startTime="584.013" endTime="585.604">
+<Sync time="584.013"/>
+oui les informations
+</Turn>
+<Turn speaker="spk1" startTime="585.604" endTime="587.771">
+<Sync time="585.604"/>
+c' est c' est quelle branche ? 
+</Turn>
+<Turn speaker="spk2" startTime="587.771" endTime="589.895">
+<Sync time="587.771"/>
+euh RF euh RF 
+</Turn>
+<Turn speaker="spk1" startTime="589.895" endTime="593.589">
+<Sync time="589.895"/>
+m-hm 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ et télévision aussi ? 
+</Turn>
+<Turn speaker="spk2" startTime="593.589" endTime="595.544">
+<Sync time="593.589"/>
+oui bien sûr 
+<Event desc="rir" type="noise" extent="instantaneous"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="595.544" endTime="597.951">
+<Sync time="595.544"/>
+et ça c' est quoi que vous préférez ? 
+</Turn>
+<Turn speaker="spk2" startTime="597.951" endTime="609.683">
+<Sync time="597.951"/>
+je préfère les des des bons documentaires 
+<Sync time="601.719"/>
+j' aime bien les 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ la Cinq j' aime bien la Cinq puis les films 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ toujours
+</Turn>
+<Turn speaker="spk1" startTime="609.683" endTime="611.542">
+<Sync time="609.683"/>
+toujours américains 
+</Turn>
+<Turn speaker="spk2" startTime="611.542" endTime="615.776">
+<Sync time="611.542"/>
+non pas que américains 
+<Sync time="612.692"/>
+il y a des bons films français aussi hein 
+<Sync time="614.373"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="615.776" endTime="618.349">
+<Sync time="615.776"/>
+et connaissez-vous Internet 
+</Turn>
+<Turn speaker="spk2" startTime="618.349" endTime="624.961">
+<Sync time="618.349"/>
+non pas du tout 
+<Sync time="619.759"/>
+je suis complètement 
+<Event desc="rir" type="noise" extent="instantaneous"/>
+ complètement euh à côté de ça 
+</Turn>
+<Turn speaker="spk1" startTime="624.961" endTime="628.503">
+<Sync time="624.961"/>
+m-hm 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ et vous lisez des journaux ?
+</Turn>
+<Turn speaker="spk2" startTime="628.503" endTime="633.27">
+<Sync time="628.503"/>
+ah oui je lis euh deux ou trois journaux par par jour 
+</Turn>
+<Turn speaker="spk1" startTime="633.27" endTime="635.85">
+<Sync time="633.27"/>
+m-hm 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ ce sont quels ? 
+</Turn>
+<Turn speaker="spk2" startTime="635.85" endTime="640.197">
+<Sync time="635.85"/>
+bon La_République_du_Centre oui 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ puis France_soir 
+<Sync time="639.121"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="640.197" endTime="642.096">
+<Sync time="640.197"/>
+et des autres magazines 
+</Turn>
+<Turn speaker="spk2" startTime="642.096" endTime="644.633">
+<Sync time="642.096"/>
+non X
+<Sync time="643.342"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="644.633" endTime="647.041">
+<Sync time="644.633"/>
+et des livres aussi la littérature XX
+</Turn>
+<Turn speaker="spk2" startTime="647.041" endTime="651.629">
+<Sync time="647.041"/>
+oui j' aime bien la littérature américaine aussi 
+<Sync time="649.543"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="651.629" endTime="655.379">
+<Sync time="651.629"/>
+et des dictionnaires de langue vous utilisez le 
+</Turn>
+<Turn speaker="spk2" startTime="655.379" endTime="659.739">
+<Sync time="655.379"/>
+non j' suis un déjà devenu un peu trop vieux pour étudier quelque chose 
+<Event desc="rir" type="noise" extent="instantaneous"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="659.739" endTime="662.395">
+<Sync time="659.739"/>
+et quelqu'un qui fait les mot croisés tout ça 
+</Turn>
+<Turn speaker="spk2" startTime="662.395" endTime="665.357">
+<Sync time="662.395"/>
+oui oui pour 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ pour passer le temps 
+</Turn>
+<Turn speaker="spk1" startTime="665.357" endTime="669.513">
+<Sync time="665.357"/>
+mh et vous avez beaucoup euh voyagé ? 
+<Sync time="668.377"/>
+
+</Turn>
+<Turn speaker="spk2" startTime="669.513" endTime="676.704">
+<Sync time="669.513"/>
+un petit peu 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ un petit peu 
+<Sync time="671.819"/>
+j' ai été attendez 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ que j' ai 
+<Event desc="bru" type="noise" extent="instantaneous"/>
+
+<Sync time="675.833"/>
+voulez-vous 
+</Turn>
+<Turn speaker="spk1" startTime="676.704" endTime="678.62">
+<Sync time="676.704"/>
+non ça va 
+<Event desc="bru" type="noise" extent="instantaneous"/>
+
+</Turn>
+<Turn speaker="spk2" startTime="678.62" endTime="700.378">
+<Sync time="678.62"/>
+euh j' ai été au 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ toute l' Europe à peu près 
+<Sync time="685.678"/>
+j' ai été une fois en Afrique 
+<Sync time="687.552"/>
+j' ai été aux États-Unis euh 
+<Sync time="689.171"/>
+j' ai été en Égypte 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ où j' ai été encore euh puis à Hong-Kong 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ à peu près
+</Turn>
+<Turn speaker="spk1" startTime="700.378" endTime="705.38">
+<Sync time="700.378"/>
+XXX et à la politique vous êtes toujours intéressé ? 
+</Turn>
+<Turn speaker="spk2" startTime="705.38" endTime="708.705">
+<Sync time="705.38"/>
+oui beaucoup 
+<Sync time="706.231"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="708.705" endTime="709.896">
+<Sync time="708.705"/>
+les 
+</Turn>
+<Turn speaker="spk2" startTime="709.896" endTime="718.711">
+<Sync time="709.896"/>
+mais je n' en parlerais pas de la politique parce que 
+<Event desc="rir" type="noise" extent="instantaneous"/>
+ elle me elle me horripile en ce moment bon 
+<Sync time="717.263"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="718.711" endTime="724.633">
+<Sync time="718.711"/>
+les problèmes plus graves de la société ce sont quels à votre avis ? 
+<Sync time="722.664"/>
+
+</Turn>
+<Turn speaker="spk2" startTime="724.633" endTime="753.017">
+<Sync time="724.633"/>
+le problème le plus grave 
+<Sync time="726.556"/>
+(faut que) je réfléchisse 
+<Sync time="727.801"/>
+
+<Sync time="730.914"/>
+je crois que 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ on n' a pas réussi à faire une Europe comme on devait la faire 
+<Sync time="737.685"/>
+
+<Sync time="739.524"/>
+on a réussi à faire une Europe euh économique 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ mais pas une Europe politique 
+<Sync time="745.126"/>
+
+<Sync time="748.753"/>
+il faudrait qu' on parle d' une seule voix 
+<Sync time="750.714"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="753.017" endTime="754.076">
+<Sync time="753.017"/>
+ce qui est difficile 
+</Turn>
+<Turn speaker="spk2" startTime="754.076" endTime="763.306">
+<Sync time="754.076"/>
+oui 
+<Sync time="754.434"/>
+
+<Sync time="755.539"/>
+mais faut faire euh 
+<Sync time="757.189"/>
+on a quand même déjà réussi un petit peu à abolir les frontières 
+<Sync time="760.473"/>
+mais il faudrait aller beaucoup beaucoup beaucoup plus loin
+</Turn>
+<Turn speaker="spk1" startTime="763.306" endTime="769.178">
+<Sync time="763.306"/>
+m-hm 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ dans le sens euh de culture 
+</Turn>
+<Turn speaker="spk2" startTime="769.178" endTime="783.479">
+<Sync time="769.178"/>
+oui de tout tout pour 
+<Sync time="770.731"/>
+
+<Sync time="775.042"/>
+moi moi pour moi il faudrait faire les États-Unis d' Europe 
+<Sync time="777.688"/>
+
+<Sync time="779.463"/>
+mais je crois que je suis un utopiste 
+<Sync time="782.171"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="783.479" endTime="789.544">
+<Sync time="783.479"/>
+existe-t-il un conflit de générations 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ entre les générations 
+</Turn>
+<Turn speaker="spk2" startTime="789.544" endTime="810.075">
+<Sync time="789.544"/>
+non je ne pense pas non non non
+<Sync time="791.741"/>
+
+<Sync time="794.673"/>
+si on peut imaginer que il y a un conflit à chaque génération c' est pareil hein 
+<Sync time="799.132"/>
+les jeunes considèrent les vieux qu' ils sont trop vieux 
+<Event desc="rir" type="noise" extent="instantaneous"/>
+
+<Sync time="801.368"/>
+et les et les vieux ne considèrent les jeunes ne comprennent pas 
+<Sync time="805.872"/>
+mais c' est pas un conflit 
+<Sync time="806.697"/>
+c' est tout à fait normal 
+<Sync time="807.833"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="810.075" endTime="813.631">
+<Sync time="810.075"/>
+mai soixante-huit à votre avis ça a influencé beaucoup ? 
+</Turn>
+<Turn speaker="spk2" startTime="813.631" endTime="822.465">
+<Sync time="813.631"/>
+oui oui 
+<Sync time="816.024"/>
+euh ça a donné en France ça a donné un peu d' air 
+<Sync time="818.562"/>
+
+<Sync time="820.772"/>
+mais ça c' est vite très vite retombé
+</Turn>
+<Turn speaker="spk1" startTime="822.465" endTime="825.577">
+<Sync time="822.465"/>
+ah oui 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ à la longue ça a pas 
+</Turn>
+<Turn speaker="spk2" startTime="825.577" endTime="831.372">
+<Sync time="825.577"/>
+non non ça a pas fait grand-chose 
+<Sync time="827.123"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="831.372" endTime="835.357">
+<Sync time="831.372"/>
+et l() les meilleures années c' étaient quelles pour vous 
+</Turn>
+<Turn speaker="spk2" startTime="835.357" endTime="852.277">
+<Sync time="835.357"/>
+
+<Event desc="rir" type="noise" extent="instantaneous"/>
+ l' année de mes trente ans 
+<Event desc="rir" type="noise" extent="instantaneous"/>
+
+<Sync time="838.754"/>
+
+<Sync time="841.412"/>
+plein d' espoir 
+<Sync time="842.159"/>
+
+<Sync time="844.452"/>
+en plus on avait envie de tout 
+<Sync time="845.942"/>
+
+</Turn>
+<Turn speaker="spk1" startTime="852.277" endTime="855.546">
+<Sync time="852.277"/>
+une conclusion ? 
+<Sync time="853.678"/>
+
+</Turn>
+<Turn speaker="spk2" startTime="855.546" endTime="867.907">
+<Sync time="855.546"/>
+la conclusion ? 
+<Sync time="856.448"/>
+
+<Sync time="857.678"/>
+euh 
+<Event desc="pau" type="noise" extent="instantaneous"/>
+ que je suis très content d' avoir fait que ça soit une jeune allemande qui ait fait cette enquête 
+<Event desc="rir" type="noise" extent="instantaneous"/>
+
+</Turn>
+</Section>
+<Section type="nontrans" startTime="867.907" endTime="960.000">
+<Turn speaker="spk1" startTime="867.907" endTime="960.000">
+<Sync time="867.907"/>
+
+<Event desc="buzz" type="noise" extent="begin"/>
+ anon 
+<Event desc="buzz" type="noise" extent="end"/>
+
+</Turn>
+</Section>
+</Episode>
+</Trans>
