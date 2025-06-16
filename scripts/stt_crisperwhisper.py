@@ -71,7 +71,7 @@ def load_wavs(vars):
     mode = vars["mode"]
     wavs = []
     if mode == "file":
-        if os.path.isfile(file_path) and input_var.lower().endswith('.wav'):
+        if os.path.isfile(file_path) and file_path.lower().endswith('.wav'):
             wavs = read_audio(wavs, file_path)
         else:
             raise ValueError(f"{file_path} is not a valid .wav file.")
@@ -81,7 +81,7 @@ def load_wavs(vars):
             for wav_path in wav_files:
                 wavs = read_audio(wavs, wav_path)
         else:
-            raise ValueError(f"{input_var} is not a valid directory.")
+            raise ValueError(f"{file_path} is not a valid directory.")
     else:
         raise ValueError("Mode must be 'file' or 'directory'.")
     
@@ -191,7 +191,7 @@ if __name__ == "__main__":
 
     # Transcribe audio using CrisperWhisper
     transcription = transcribe(pipe, wavs)
-    crisper_whisper_result = adjust_pauses_for_hf_pipeline_output(hf_pipeline_output)
+    crisper_whisper_result = adjust_pauses_for_hf_pipeline_output(transcription)
 
     # Write transcription to file
     print(crisper_whisper_result)
