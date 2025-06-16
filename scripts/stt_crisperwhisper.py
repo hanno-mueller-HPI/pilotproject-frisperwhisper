@@ -43,6 +43,23 @@ def parse_arguments():
     return vars
 
 
+def read_audio(wavs, file_path):
+    """
+    Reads a single wav file into an array with sampling rate.
+    """
+
+    print(f"Loading wav file: {file_path}")
+    array, sampling_rate = sf.read(file_path)
+    audio = {
+        "path": file_path,
+        "array": array,
+        "sampling_rate": sampling_rate
+        }
+    wavs.append(audio)
+
+    return wavs
+
+
 def load_wavs(vars):
     """
     Checks if vars["mode"] is 'file' or 'directory'.
@@ -50,23 +67,19 @@ def load_wavs(vars):
     If 'directory', reads all wavs in the folder into arrays with sampling rates.
     Returns a list of tuples: (filepath, audio_array, sample_rate)
     """
-    input_var = vars["input"]
+    file_path = vars["input"]
     mode = vars["mode"]
     wavs = []
     if mode == "file":
-        if os.path.isfile(input_var) and input_var.lower().endswith('.wav'):
-            print(f"Loading single wav file: {input_var}")
-            audio, sr = sf.read(input_var)
-            wavs.append((input_var, audio, sr))
+        if os.path.isfile(file_path) and input_var.lower().endswith('.wav'):
+            wavs = read_audio(wavs, file_path)
         else:
-            raise ValueError(f"{input_var} is not a valid .wav file.")
+            raise ValueError(f"{file_path} is not a valid .wav file.")
     elif mode == "directory":
-        if os.path.isdir(input_var):
-            print(f"Loading all wav files from directory: {input_var}")
-            wav_files = glob.glob(os.path.join(input_var, "*.wav"))
+        if os.path.isdir(file_path):
+            wav_files = glob.glob(os.path.join(file_path, "*.wav"))
             for wav_path in wav_files:
-                audio, sr = sf.read(wav_path)
-                wavs.append((wav_path, audio, sr))
+                wavs = read_audio(wavs, wav_path)
         else:
             raise ValueError(f"{input_var} is not a valid directory.")
     else:
@@ -178,8 +191,6 @@ if __name__ == "__main__":
 
     # Transcribe audio using CrisperWhisper
     transcription = transcribe(pipe, wavs)
-    print(transcription)
-    sys.exit("develop")
     crisper_whisper_result = adjust_pauses_for_hf_pipeline_output(hf_pipeline_output)
 
     # Write transcription to file

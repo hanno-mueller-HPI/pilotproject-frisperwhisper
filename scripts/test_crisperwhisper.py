@@ -1,6 +1,7 @@
 import os
 import sys
 import torch
+import soundfile as sf
 
 from datasets import load_dataset
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
@@ -60,8 +61,30 @@ pipe = pipeline(
     device=device,
 )
 
-dataset = load_dataset("distil-whisper/librispeech_long", "clean", split="validation")
-sample = dataset[0]["audio"]
+# use a test dataset
+#dataset = load_dataset("distil-whisper/librispeech_long", "clean", split="validation")
+#sample = dataset[0]["audio"]
+#hf_pipeline_output = pipe(sample)
+
+# use a custom dataset
+file_path = "./data_sample/a040a.wav"
+start_sec = 8 * 60 + 40  # 8 minutes 40 seconds = 520 seconds
+end_sec = 9 * 60         # 9 minutes = 540 seconds
+
+with sf.SoundFile(file_path) as f:
+    sampling_rate = f.samplerate
+    start_frame = int(start_sec * sampling_rate)
+    num_frames = int((end_sec - start_sec) * sampling_rate)
+    f.seek(start_frame)
+    array = f.read(frames=num_frames)
+
+sample = {
+    "path": file_path,
+    "array": array,
+    "sampling_rate": sampling_rate
+}
 hf_pipeline_output = pipe(sample)
+
+# transcribe
 crisper_whisper_result = adjust_pauses_for_hf_pipeline_output(hf_pipeline_output)
 print(crisper_whisper_result)
