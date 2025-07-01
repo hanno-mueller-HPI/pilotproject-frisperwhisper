@@ -11,7 +11,8 @@ import os
 import argparse
 import soundfile as sf
 import sounddevice as sd # necessary for audio playback (e.g., debugging, testing)
-import json
+import numpy as np
+import librosa
 
 
 ### Class Definitions ########################################################
@@ -95,27 +96,38 @@ class TextGrid:
             if name and intervals:
                 self.items.append({'name': name, 'intervals': intervals})
 
-    def to_dict(self):
+    def to_dict(self, resample=None):
+        """
+        Converts TextGrid intervals to dicts.
+        If resample is an integer, audio is resampled to that sampling rate.
+        If resample is None (default), no resampling is performed.
+        """
         dicts = []
         audio_path = os.path.splitext(self.path)[0] + ".wav"
         if not os.path.exists(audio_path):
             sampling_rate = None
-            audio = None
         else:
-            audio = sf.SoundFile(audio_path)
-            sampling_rate = audio.samplerate
+            with sf.SoundFile(audio_path) as audio_file:
+                orig_sr = audio_file.samplerate
 
         for item in self.items:
             speaker = item['name']
             for idx, interval in enumerate(item['intervals'], 1):
-                if sampling_rate is not None:
-                    start_sample = int(interval['xmin'] * sampling_rate)
-                    end_sample = int(interval['xmax'] * sampling_rate)
+                if os.path.exists(audio_path):
+                    start_sample = int(interval['xmin'] * orig_sr)
+                    end_sample = int(interval['xmax'] * orig_sr)
                     with sf.SoundFile(audio_path) as f:
                         f.seek(start_sample)
                         array = f.read(end_sample - start_sample)
+                    # Resample if requested
+                    if resample is not None and isinstance(resample, int) and resample != orig_sr:
+                        array = librosa.resample(np.asarray(array), orig_sr=orig_sr, target_sr=resample)
+                        sampling_rate = resample
+                    else:
+                        sampling_rate = orig_sr
                 else:
                     array = []
+                    sampling_rate = None
                 d = {
                     'path': self.path,
                     'audio': {
@@ -130,8 +142,6 @@ class TextGrid:
                     'xmax': interval['xmax']
                 }
                 dicts.append(d)
-        if audio is not None:
-            audio.close()
         return dicts
 
 ### Function Definitions #####################################################
@@ -169,45 +179,10 @@ if __name__ == "__main__":
     # Load TextGrids from the specified folder
     textgrids = load_textgrids_from_folder(vars.folder)
 
-###########################################
-################## TO-DO ##################
-### Add a function to textgrid class to resample to 16000 Hz (or other value)
-### Save the Class into a library file
-### Write a new script that loads textgrid by textgrid
-### and starts tokenisation
-###########################################
-
-    from transformers import WhisperFeatureExtractor
-
-    feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-small")
-
-    from transformers import WhisperTokenizer
-
-    tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-small", language="French", task="transcribe")
-
-    input_str = textgrids[1].to_dict()[100]["sentence"]
-    labels = tokenizer(input_str).input_ids
-    decoded_with_special = tokenizer.decode(labels, skip_special_tokens=False)
-    decoded_str = tokenizer.decode(labels, skip_special_tokens=True)
-
-    print(f"Input:                 {input_str}")
-    print(f"Decoded w/ special:    {decoded_with_special}")
-    print(f"Decoded w/out special: {decoded_str}")
-    print(f"Are equal:             {input_str == decoded_str}")
-
-    
-    from transformers import WhisperProcessor
-
-    processor = WhisperProcessor.from_pretrained("openai/whisper-small", language="Hindi", task="transcribe")
-
-
-
-
-
     # code for debugging
-    RUN=False
+    RUN=True
     if RUN:
-        dicts = textgrids[0].to_dict()
+        dicts = textgrids[0].to_dict(resample=16000)
         spk2_entries = [d for d in dicts if d['speaker'] == 'spk2']
 
         for i, entry in enumerate(spk2_entries[1:]):  # Skip the first entry
