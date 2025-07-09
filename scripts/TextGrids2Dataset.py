@@ -8,11 +8,16 @@
 
 ### Required Libraries ######################################################
 import os
+import re
+import gc
+import chardet
 import argparse
 import soundfile as sf
 import sounddevice as sd # necessary for audio playback (e.g., debugging, testing)
 import numpy as np
 import librosa
+from datasets import Dataset, DatasetDict, Features, Value, Audio
+import traceback
 
 
 ### Class Definitions ########################################################
@@ -29,13 +34,22 @@ class TextGrid:
 
     @staticmethod
     def load_textgrid(path):
-        """Loads a TextGrid file from disk and returns a TextGrid object."""
+        """Loads a TextGrid file from disk and returns a TextGrid object with automatic encoding detection."""
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            # Detect encoding
+            with open(path, "rb") as f:
+                rawdata = f.read(4096)
+            result = chardet.detect(rawdata)
+            encoding = result['encoding'] if result['encoding'] else 'utf-8'
+            #print(f"Detected encoding for {os.path.basename(path)}: {encoding}")
+            # Read file with detected encoding
+            with open(path, "r", encoding=encoding) as f:
                 content = f.read()
             return TextGrid(path=path, content=content)
         except Exception as e:
             print(f"{os.path.basename(path)} could not be loaded")
+            print(f"Error: {e}")
+            traceback.print_exc()
             return None
 
     def save_textgrid(self, out_path=None):
@@ -52,14 +66,15 @@ class TextGrid:
     def _parse(self):
         lines = self.content.splitlines()
 
-        # Get global xmin and xmax
         for line in lines:
             if line.strip().startswith("xmin ="):
-                self.xmin = float(line.strip().split("=")[1])
+                num_str = re.findall(r"[-+]?\d*\.\d+|\d+", line.strip().split("=")[1])[0]
+                self.xmin = float(num_str)
                 break
         for line in lines:
             if line.strip().startswith("xmax ="):
-                self.xmax = float(line.strip().split("=")[1])
+                num_str = re.findall(r"[-+]?\d*\.\d+|\d+", line.strip().split("=")[1])[0]
+                self.xmax = float(num_str)
                 break
 
         # Parse items (speakers)
@@ -143,6 +158,78 @@ class TextGrid:
                 }
                 dicts.append(d)
         return dicts
+    
+    def to_dataset(self, resample=None):
+        """
+        Converts the TextGrid to a Hugging Face Dataset with the specified structure.
+        Fills missing metadata fields with default or empty values.
+        """
+        dicts = []
+        audio_path = os.path.splitext(self.path)[0] + ".wav"
+        audio = None
+        sampling_rate = None
+
+        if os.path.exists(audio_path):
+            with sf.SoundFile(audio_path) as audio_file:
+                orig_sr = audio_file.samplerate
+                audio_file.seek(0)
+                audio = audio_file.read()
+                print(f"Loaded audio from {audio_path} with original sampling rate {orig_sr} Hz")
+            if resample is not None and isinstance(resample, int) and resample != orig_sr:
+                audio = librosa.resample(np.asarray(audio), orig_sr=orig_sr, target_sr=resample)
+                sampling_rate = resample
+                print(f"Resampled audio to {sampling_rate} Hz")
+            else:
+                sampling_rate = orig_sr
+
+        for item in self.items:
+            speaker = item['name']
+            for idx, interval in enumerate(item['intervals'], 1):
+                if audio is not None:
+                    start_sample = int(interval['xmin'] * sampling_rate)
+                    end_sample = int(interval['xmax'] * sampling_rate)
+                    if start_sample < end_sample:
+                        array = audio[start_sample:end_sample]
+                        print(f"Extracted audio segment from {start_sample} to {end_sample} samples")
+                    else:
+                        continue
+                else:
+                    array = []
+                d = {
+                    'client_id': speaker if speaker else "",
+                    'path': self.path,
+                    'audio': {
+                        'path': audio_path,
+                        'array': array,
+                        'sampling_rate': sampling_rate
+                    },
+                    'sentence': interval['text'],
+                    'up_votes': 0,
+                    'down_votes': 0,
+                    'age': "",
+                    'gender': "",
+                    'accent': "",
+                    'locale': "",
+                    'segment': f"{idx}"
+                }
+                dicts.append(d)
+
+        features = Features({
+            'client_id': Value(dtype='string'),
+            'path': Value(dtype='string'),
+            'audio': Audio(sampling_rate=48000, mono=True, decode=True),
+            'sentence': Value(dtype='string'),
+            'up_votes': Value(dtype='int64'),
+            'down_votes': Value(dtype='int64'),
+            'age': Value(dtype='string'),
+            'gender': Value(dtype='string'),
+            'accent': Value(dtype='string'),
+            'locale': Value(dtype='string'),
+            'segment': Value(dtype='string'),
+        })
+
+        dataset = Dataset.from_list(dicts, features=features)
+        return dataset
 
 ### Function Definitions #####################################################
 
@@ -179,8 +266,23 @@ if __name__ == "__main__":
     # Load TextGrids from the specified folder
     textgrids = load_textgrids_from_folder(vars.folder)
 
-    # code for debugging
+    # check transformation into dataset
     RUN=True
+    if RUN:
+        for idx, tg in enumerate(textgrids):
+            print('*'*20)
+            print(f"Processing TextGrid {tg.path}")
+            try:
+                ds = tg.to_dataset(resample=16000)
+                print(f"Processed {tg.path}")
+                print(ds[20:23])
+                del ds
+                gc.collect()  # Free memory
+            except Exception as e:
+                print(f"Conversion failed at textgrid index {idx} (path: {tg}): {e}")
+    
+    # code for debugging
+    RUN=False
     if RUN:
         dicts = textgrids[0].to_dict(resample=16000)
         spk2_entries = [d for d in dicts if d['speaker'] == 'spk2']

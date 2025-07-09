@@ -1,5 +1,5 @@
 #############################################################################
-# Script Name: finetune_whisper   .py                                       #
+# Script Name: finetune_whisper.py                                          #
 # Description: This script takes a folder with TextGrids and audios and     #
 #              uses both to finetune a Whisper model.                       #
 # Author: Hanno Müller                                                      #
@@ -18,14 +18,14 @@ from transformers import WhisperFeatureExtractor
 from transformers import WhisperTokenizer
 from transformers import WhisperProcessor
 from transformers import WhisperForConditionalGeneration
-from datasets import Dataset
-from datasets import Audio
+from datasets import Dataset, DatasetDict, Audio, load_dataset, concatenate_datasets
 import torch
 from dataclasses import dataclass
 from typing import Any, Dict, List, Union
 import evaluate
 from transformers import Seq2SeqTrainingArguments
 from transformers import Seq2SeqTrainer
+import random
 
 
 ### Class Definitions ########################################################
@@ -131,77 +131,131 @@ if __name__ == "__main__":
     # Load TextGrids from the specified folder
     textgrids = load_textgrids_from_folder(vars.folder)
 
-    # Prepare the Whisper processor
-    feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-small")
-    tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-small", language="French", task="transcribe")
+    # Combine all dicts from all textgrids
+    all_datasets = []
+    created_indices = []
+    for i, tg in enumerate(textgrids):
+        try:
+            ds = tg.to_dataset()
+            parquet_path = f"temp_dataset_{i}.parquet"
+            ds.to_parquet(parquet_path)
+            del ds  # free memory
+            created_indices.append(i)
+            print(f"Processed {tg.path}")
+        except Exception as e:
+            print(f"Error processing {tg}: {e}")
 
-    processor = WhisperProcessor.from_pretrained("openai/whisper-small", language="French", task="transcribe")
-    model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-small")
+    # Only load Parquet files that exist
+    all_datasets = [
+        Dataset.from_parquet(f"temp_dataset_{i}.parquet")
+        for i in created_indices
+        if os.path.exists(f"temp_dataset_{i}.parquet")
+    ]
 
-    model.generation_config.language = "French"
-    model.generation_config.task = "transcribe"
-    model.generation_config.forced_decoder_ids = None
+    #for tg in textgrids:
+    #    try:
+    #        all_datasets.append(tg.to_dataset())
+    #    except Exception as e:
+    #        print(f"Could not append dataset for {tg}: {e}")
 
-    #data_collator = DataCollatorSpeechSeq2SeqWithPadding(
-    #    processor=processor,
-    #    decoder_start_token_id=model.config.decoder_start_token_id,
-    #)
+    # Concatenate all datasets into one
+    from datasets import concatenate_datasets
+    full_dataset = concatenate_datasets(all_datasets)
 
-    metric = evaluate.load("wer")
+    # Shuffle the dataset
+    full_dataset = full_dataset.shuffle(seed=42)
 
-    # define training arguments
-    """
-    training_args = Seq2SeqTrainingArguments(
-        output_dir="../tmpTrain",  # change to a repo name of your choice
-        per_device_train_batch_size=16,
-        gradient_accumulation_steps=1,  # increase by 2x for every 2x decrease in batch size
-        learning_rate=1e-5,
-        warmup_steps=500,
-        max_steps=5000,
-        gradient_checkpointing=True,
-        fp16=True,
-        eval_strategy="steps",
-        per_device_eval_batch_size=8,
-        predict_with_generate=True,
-        generation_max_length=225,
-        save_steps=1000,
-        eval_steps=1000,
-        logging_steps=25,
-        report_to=["tensorboard"],
-        load_best_model_at_end=True,
-        metric_for_best_model="wer",
-        greater_is_better=False,
-        push_to_hub=False,
-    )
+    # Split into 80% train, 20% test
+    split_idx = int(0.8 * len(full_dataset))
+    train_dataset = full_dataset.select(range(split_idx))
+    test_dataset = full_dataset.select(range(split_idx, len(full_dataset)))
 
-    trainer = Seq2SeqTrainer(
-        args=training_args,
-        model=model,
-        train_dataset=common_voice["train"],
-        eval_dataset=common_voice["test"],
-        data_collator=data_collator,
-        compute_metrics=compute_metrics,
-        tokenizer=processor.feature_extractor,
-    )
-    """
+    # Create DatasetDict
+    LangAge = DatasetDict({
+        "train": train_dataset,
+        "test": test_dataset
+    })
 
-    all_unique_tokens = []
+    # Example usage:
+    print(LangAge)
 
-    for textgrid in textgrids:
-        dicts = textgrid.to_dict()
-        sentences = [entry["sentence"] for entry in dicts]
-        for sentence in sentences:
-            try:
-                token = tokenize(sentence, tokenizer)
-            except Exception as e:
-                print(f"Tokenization failed for sentence: {sentence}\nError: {e}")
-                token = None
-            all_unique_tokens.extend(token)
-        #dataset = dataset.map(prepare_dataset, num_proc=10)
+    RUN = False
+    if RUN:
 
-    all_unique_tokens = sorted(list(set(all_unique_tokens)))
-    decoded_tokens = [tokenizer.decode([item], skip_special_tokens=True) for item in all_unique_tokens]
-    print(decoded_tokens)
+        # Prepare the Whisper processor
+        feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-small")
+        tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-small", language="French", task="transcribe")
+
+        processor = WhisperProcessor.from_pretrained("openai/whisper-small", language="French", task="transcribe")
+        model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-small")
+
+        model.generation_config.language = "French"
+        model.generation_config.task = "transcribe"
+        model.generation_config.forced_decoder_ids = None
+
+        #data_collator = DataCollatorSpeechSeq2SeqWithPadding(
+        #    processor=processor,
+        #    decoder_start_token_id=model.config.decoder_start_token_id,
+        #)
+
+        metric = evaluate.load("wer")
+
+        # define training arguments
+        """
+        training_args = Seq2SeqTrainingArguments(
+            output_dir="../tmpTrain",  # change to a repo name of your choice
+            per_device_train_batch_size=16,
+            gradient_accumulation_steps=1,  # increase by 2x for every 2x decrease in batch size
+            learning_rate=1e-5,
+            warmup_steps=500,
+            max_steps=5000,
+            gradient_checkpointing=True,
+            fp16=True,
+            eval_strategy="steps",
+            per_device_eval_batch_size=8,
+            predict_with_generate=True,
+            generation_max_length=225,
+            save_steps=1000,
+            eval_steps=1000,
+            logging_steps=25,
+            report_to=["tensorboard"],
+            load_best_model_at_end=True,
+            metric_for_best_model="wer",
+            greater_is_better=False,
+            push_to_hub=False,
+        )
+
+        trainer = Seq2SeqTrainer(
+            args=training_args,
+            model=model,
+            train_dataset=common_voice["train"],
+            eval_dataset=common_voice["test"],
+            data_collator=data_collator,
+            compute_metrics=compute_metrics,
+            tokenizer=processor.feature_extractor,
+        )
+        """
+
+    # code for debugging
+    RUN=False
+    if RUN:
+        all_unique_tokens = []
+
+        for textgrid in textgrids:
+            datasets = textgrid.to_dataset()
+            sentences = [entry["sentence"] for entry in datasets]
+            for sentence in sentences:
+                try:
+                    token = tokenize(sentence, tokenizer)
+                except Exception as e:
+                    print(f"Tokenization failed for sentence: {sentence}\nError: {e}")
+                    token = None
+                all_unique_tokens.extend(token)
+            #dataset = dataset.map(prepare_dataset, num_proc=10)
+
+        all_unique_tokens = sorted(list(set(all_unique_tokens)))
+        decoded_tokens = [tokenizer.decode([item], skip_special_tokens=True) for item in all_unique_tokens]
+        print(decoded_tokens)
 
         #trainer.train()
 
