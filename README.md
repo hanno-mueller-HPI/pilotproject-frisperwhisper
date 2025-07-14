@@ -3,27 +3,35 @@
 
 ## Anforderungen
 
-Um sicherzustellen, dass über verschiedene Betriebssysteme und Maschinen hinweg die gleiche Anforderungen erfüllt sind, wird das Anlegen einer *virtual environment* empfohlen. Diese lässt sich mit Python einrichten.
+Um sicherzustellen, dass über verschiedene Betriebssysteme und Maschinen hinweg die gleiche Anforderungen erfüllt sind, wird das Anlegen einer *virtual environment* empfohlen. Diese lässt sich mit UV einrichten.
 
 ```bash
-python3 -m venv .venv # erstellt eine virtual environment mit dem Namen ".venv"
-python3 source .venv/bin/activate # aktiviert die virtual environment
+which uv || echo "UV not found" # überprüft die UV Installation
 ```
 
-### Installation benötigter Pakete
+Sollte UV nicht installiert sein, lässt es sich wie folgt installieren.
 
 ```bash
-pip install torch
-pip install git+https://github.com/nyrahealth/transformers.git@crisper_whisper # install custom transformer for most accurate timestamps
-pip install datasets
-pip install transformers
-pip install librosa
-pip install soundfile
-pip install accelerate
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Anschließend kann die Virtuelle Umgebung erstellt und aktiviert werden.
+
+```bash
+uv venv .venv # erstellt eine virtual environment mit dem Namen ".venv"
+source .venv/bin/activate # aktiviert die virtual environment
+```
+
+Dann werden die benötigten Pakete installiert. UV sorgt dafür, dass die exaktern Versionen installiert werden.
+
+```bash
+uv pip sync uv.lock  # installiert exakte Versionen
 ```
 
 
-##
+## Datenverarbeitung
+
+
 
 
 

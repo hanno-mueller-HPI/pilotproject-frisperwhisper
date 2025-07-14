@@ -1,4 +1,19 @@
-.venv
+# Virtual environments
+.venv/
+venv/
+env/
+
+# UV cache
+.uv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Data
 data*
 tmp*
 parquet*
