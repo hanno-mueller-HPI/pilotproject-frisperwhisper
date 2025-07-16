@@ -33,18 +33,67 @@ $ uv pip install -r requirements.txt  # installiert exakte Versionen
 
 ## Datenverarbeitung
 
+### Workflow-Übersicht
+
+Der Datenverarbeitungsprozess erfolgt in zwei Hauptschritten:
+
+1. **Audio-Resampling**: `resample44k16k.py` konvertiert alle WAV-Dateien von 44,1 kHz auf 16 kHz
+2. **Dataset-Erstellung**: `TextGrids2Dataset.py` verarbeitet TextGrid-Dateien und erstellt Train/Test-Splits
+
+Das `clean_TextGrids.py` Modul wird automatisch von `TextGrids2Dataset.py` verwendet, um störende Elemente zu filtern (z.B. "(buzz) anon (buzz)" Muster, leere Texte, zu kurze Audio-Segmente).
+
 ### Downsampling 44,1 kHz zu 16 kHz
 
-Zunächst werden die Original-Audioaufnahmen komprimiert, und zwar von 44,4 kHz Sampling-Rate auf 16 kHz Samplin-Rate. Dies kann einiige Zeit dauern. Für den folgenden Befehl gibt es drei Optionen:
+Zunächst werden die Original-Audioaufnahmen komprimiert, und zwar von 44,1 kHz Sampling-Rate auf 16 kHz Sampling-Rate. Dies kann einige Zeit (d.h. Tage) dauern. Das Skript überschreibt die ursprünglichen Dateien mit den resampelten Versionen. Für den folgenden Befehl gibt es zwei Optionen:
 
 - `--input_folder`: Spezifiziert den zu verarbeitenden Ordner (sollte `./data` sein).
-- `--option` (default=`keep`, alternativ `delete`): Mit dieser Option können die großen 44,1 kHz-Dateien nach dem downsampling gelöscht werden (`delete`) - das spart Speicherplatz, sollte aber nur ausgeführt werden, wenn es sich bei dem verarbeiteten Ordner um eine Kopie der Originalaufnahmen handelt.
 - `--processes`: Spezifiziert wie viele Aufnahmen gleichzeitig verarbeitet werden sollen; es können maximal so viele Prozesse ausgewählt werden, wie Cores zur Verfügung stehen. In der Praxis empfiehlt es sich, nicht mehr als die Hälfte der verfügbaren Cores zu verwenden.
 
 ```bash
-(.venv)$ python scripts/resample44k16k.py -i data -o keep -p 4
+(.venv)$ python scripts/resample44k16k.py -i data -p 4
 ```
 
+### Erstellung des DataSetDict
+
+Die Textgrids und Audios (16 kHz) werden in ein DataSetDict gespeichert. Das DataSetDict besteht aus zwei Datasets, eines für Training (80%) und eines zum Testen (20%). Das Test-Set besteht, unter anderem, aus den händisch-kurierten Intervallen, die in einer CSV-Datei spezifiziert werden können. 
+
+Das Skript nutzt parallele Verarbeitung und Parquet-Dateien als Zwischenspeicher für Memory-Effizienz. Zusätzlich werden die Daten automatisch bereinigt (z.B. Entfernung von "(buzz) anon (buzz)" Mustern und leeren Intervallen) über das `clean_TextGrids.py` Modul.
+
+Folgende Optionen stehen zur Verfügung:
+
+- `-f`, `--folder`: Pfad zum Ordner mit TextGrid-Dateien (erforderlich)
+- `-o`, `--output_folder`: Pfad für das finale DataSetDict (erforderlich)
+- `-n`, `--number_of_processes`: Anzahl paralleler Prozesse (Standard: 4)
+- `-c`, `--csv_file`: CSV-Datei mit Test-Set Intervallen (optional, siehe unten)
+
+```bash
+(.venv)$ python scripts/TextGrids2Dataset.py -f data -o output_dataset -n 4 -c test_intervals.csv
+```
+
+#### CSV-Format für Test-Set Definition
+
+Falls eine CSV-Datei für die Test-Set Definition verwendet wird, muss sie folgende Spalten enthalten:
+- `path`: Pfad zur TextGrid-Datei
+- `speaker`: Sprecher-ID
+- `interval`: Intervall-Index (beginnend bei 0)
+
+Beispiel (`test_intervals.csv`):
+```csv
+path,speaker,interval
+data/speaker1/file1.TextGrid,speaker1,5
+data/speaker1/file2.TextGrid,speaker1,12
+data/speaker2/file3.TextGrid,speaker2,3
+```
+
+#### Train/Test-Split Logik
+
+Das Skript teilt die Daten folgendermaßen auf:
+
+1. **Test-Set**: Falls eine CSV-Datei angegeben wird, werden die dort spezifizierten Intervalle garantiert ins Test-Set aufgenommen
+2. **Verbleibendes Test-Set**: Die restlichen 20% werden zufällig aus den verbleibenden Daten ausgewählt
+3. **Train-Set**: Alle übrigen Daten (ca. 80%) werden für das Training verwendet
+
+Diese Methode stellt sicher, dass wichtige oder händisch-kuratierte Intervalle im Test-Set landen, während gleichzeitig eine ausgewogene Aufteilung gewährleistet wird.
 
 
 ## Sonstiges

@@ -10,7 +10,7 @@
 import os
 import argparse
 import soundfile as sf
-import sounddevice as sd # necessary for audio playback (e.g., debugging, testing)
+#import sounddevice as sd # necessary for audio playback (e.g., debugging, testing)
 import numpy as np
 import librosa
 from TextGrids2Dataset import TextGrid
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     for i, tg in enumerate(textgrids):
         try:
             ds = tg.to_dataset()
-            parquet_path = f"temp_dataset_{i}.parquet"
+            parquet_path = f"tmp_parquet/temp_dataset_{i}.parquet"
             ds.to_parquet(parquet_path)
             del ds  # free memory
             created_indices.append(i)
