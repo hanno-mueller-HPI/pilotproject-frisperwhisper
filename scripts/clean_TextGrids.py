@@ -57,12 +57,23 @@ def should_remove_very_short_audio(entry, min_duration_seconds=0.1):
     Check if an entry has very short audio duration and should be removed.
     
     Args:
-        entry (dict): Dataset entry with 'audio' field containing 'array' and 'sampling_rate'
+        entry (dict): Dataset entry with either:
+                     - 'audio' field containing 'array' and 'sampling_rate' (processed entries)
+                     - 'start_time', 'end_time' fields (lightweight entries)
         min_duration_seconds (float): Minimum duration in seconds
         
     Returns:
         bool: True if the entry should be removed, False otherwise
     """
+    # Method 1: Check if entry has timing information (lightweight entries)
+    if 'start_time' in entry and 'end_time' in entry:
+        duration_seconds = entry['end_time'] - entry['start_time']
+        if duration_seconds < min_duration_seconds:
+            logger.debug(f"Removing entry with short duration: {duration_seconds:.3f}s (timing-based)")
+            return True
+        return False
+    
+    # Method 2: Check if entry has audio data (processed entries)
     audio_data = entry.get('audio', {})
     audio_array = audio_data.get('array', [])
     sampling_rate = audio_data.get('sampling_rate', 16000)
@@ -74,7 +85,7 @@ def should_remove_very_short_audio(entry, min_duration_seconds=0.1):
     duration_seconds = len(audio_array) / sampling_rate
     
     if duration_seconds < min_duration_seconds:
-        logger.debug(f"Removing entry with short duration: {duration_seconds:.3f}s")
+        logger.debug(f"Removing entry with short duration: {duration_seconds:.3f}s (audio-based)")
         return True
     
     return False

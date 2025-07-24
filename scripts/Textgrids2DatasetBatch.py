@@ -1,9 +1,9 @@
 #############################################################################
-# Script Name: TextGrids2DatasetDebug.py                                    #
-# Description: Debug version - Creates train/test split of TextGrid data as #
-#              HuggingFace DataSetDict with proper Audio feature handling   #
+# Script Name: TextgridDatasetBatch.py                                      #
+# Description: Improved version with multiprocessing for batches and robust #
+#              audio loading handling for large files                       #
 # Author: Hanno Müller                                                      #
-# Date: 2025-07-23                                                          #
+# Date: 2025-07-24                                                          #
 #############################################################################
 
 ### Required Libraries ######################################################
@@ -22,6 +22,9 @@ import traceback
 import random
 import shutil
 from pathlib import Path
+from functools import partial
+import tempfile
+import subprocess
 
 # Import cleaning functions
 from clean_TextGrids import clean_textgrid_entries
@@ -147,13 +150,20 @@ class TextGrid:
             print(f"Warning: Audio file {audio_path} not found")
             return entries
             
-        # Check sampling rate without loading the full audio
-        with sf.SoundFile(audio_path) as audio_file:
-            orig_sr = audio_file.samplerate
-            if orig_sr != 16000:
-                raise ValueError(f"Audio file {audio_path} has sampling rate {orig_sr} Hz, expected 16000 Hz")
-            
-            print(f"Found audio file {audio_path} with sampling rate {orig_sr} Hz")
+        # Check sampling rate and duration without loading the full audio
+        try:
+            with sf.SoundFile(audio_path) as audio_file:
+                orig_sr = audio_file.samplerate
+                total_frames = audio_file.frames
+                duration = total_frames / orig_sr
+                
+                if orig_sr != 16000:
+                    raise ValueError(f"Audio file {audio_path} has sampling rate {orig_sr} Hz, expected 16000 Hz")
+                
+                print(f"Found audio file {audio_path} with sampling rate {orig_sr} Hz, duration {duration:.2f}s")
+        except Exception as e:
+            print(f"Error reading audio file {audio_path}: {e}")
+            return entries
 
         for item in self.items:
             speaker = item['name']
@@ -188,7 +198,7 @@ class TextGrid:
 
 def parse_arguments():
     """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description="Create train/test split of TextGrid data.")
+    parser = argparse.ArgumentParser(description="Create train/test split of TextGrid data with improved multiprocessing.")
     parser.add_argument(
         "-f", "--folder",
         type=str,
@@ -215,8 +225,14 @@ def parse_arguments():
     parser.add_argument(
         "--batch_size",
         type=int,
-        default=1000,
-        help="Batch size for processing entries (default: 1000)"
+        default=500,
+        help="Batch size for processing entries (default: 500)"
+    )
+    parser.add_argument(
+        "--audio_batch_processes",
+        type=int,
+        default=2,
+        help="Number of processes for audio batch processing (default: 2)"
     )
     return parser.parse_args()
 
@@ -245,34 +261,20 @@ def process_textgrid_lightweight(args_tuple):
         entries = textgrid.to_dataset_entries_lightweight()
         original_count = len(entries)
         
-        # Apply cleaning filters (but modify short_audio check for lightweight entries)
-        # First apply text-based filters
-        text_cleaned_entries = clean_textgrid_entries(
+        # Apply cleaning filters - now including short_audio with timing-based filtering
+        cleaned_entries = clean_textgrid_entries(
             entries,
             remove_buzz_anon=True,
             remove_empty=True,
-            remove_short_audio=False,  # Skip this for now
+            remove_short_audio=True,  # Enable duration-based filtering
             min_duration=0.1
         )
         
-        # Then apply duration-based filtering using timing information
-        duration_cleaned_entries = []
-        short_count = 0
-        for entry in text_cleaned_entries:
-            duration = entry['end_time'] - entry['start_time']
-            if duration >= 0.1:  # min_duration = 0.1 seconds
-                duration_cleaned_entries.append(entry)
-            else:
-                short_count += 1
-        
-        cleaned_entries = duration_cleaned_entries
-        
         cleaned_count = len(cleaned_entries)
         total_removed = original_count - cleaned_count
-        text_removed = len(entries) - len(text_cleaned_entries)
         
         print(f"Processed {textgrid_path}: {original_count} entries -> {cleaned_count} entries "
-              f"(removed {total_removed}: {text_removed} text filters, {short_count} short_audio)")
+              f"(removed {total_removed} entries by cleaning filters)")
         
         return cleaned_entries
             
@@ -281,23 +283,126 @@ def process_textgrid_lightweight(args_tuple):
         traceback.print_exc()
         return []
 
-def load_audio_segment(audio_path, start_time, end_time, sampling_rate):
-    """Load a specific audio segment from file."""
+def load_audio_segment_robust(audio_path, start_time, end_time, sampling_rate):
+    """
+    Load a specific audio segment from file with robust error handling for large files.
+    Uses ffmpeg as fallback for problematic files.
+    """
     try:
-        # Calculate sample indices
+        # Method 1: Try soundfile with seek (for smaller files)
         start_sample = int(start_time * sampling_rate)
         end_sample = int(end_time * sampling_rate)
         
-        # Load only the required segment
         with sf.SoundFile(audio_path) as audio_file:
+            # Check if the file might be too large for reliable seeking
+            file_duration = audio_file.frames / audio_file.samplerate
+            if file_duration > 1800:  # 30 minutes threshold
+                raise Exception("File too large for soundfile seeking, trying ffmpeg")
+            
             audio_file.seek(start_sample)
             frames_to_read = end_sample - start_sample
             audio_array = audio_file.read(frames_to_read)
             
         return np.asarray(audio_array, dtype=np.float32)
+        
     except Exception as e:
-        print(f"Error loading audio segment from {audio_path}: {e}")
-        return np.array([], dtype=np.float32)
+        # Method 2: Fallback to ffmpeg for large or problematic files
+        try:
+            #print(f"Using ffmpeg fallback for {os.path.basename(audio_path)} segment {start_time:.2f}-{end_time:.2f}s")
+            
+            # Use ffmpeg to extract the specific segment
+            duration = end_time - start_time
+            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
+                temp_path = temp_file.name
+            
+            # Run ffmpeg to extract segment
+            cmd = [
+                'ffmpeg', '-i', audio_path,
+                '-ss', str(start_time),
+                '-t', str(duration),
+                '-acodec', 'pcm_s16le',
+                '-ar', str(sampling_rate),
+                '-ac', '1',
+                '-y', temp_path,
+                '-loglevel', 'quiet'
+            ]
+            
+            result = subprocess.run(cmd, capture_output=True)
+            if result.returncode == 0:
+                # Load the extracted segment
+                audio_array, _ = librosa.load(temp_path, sr=sampling_rate, mono=True)
+                os.unlink(temp_path)  # Clean up temp file
+                return audio_array.astype(np.float32)
+            else:
+                print(f"FFmpeg failed for {audio_path}: {result.stderr.decode()}")
+                os.unlink(temp_path)  # Clean up temp file
+                return np.array([], dtype=np.float32)
+                
+        except Exception as e2:
+            print(f"Both soundfile and ffmpeg failed for {audio_path}: {e2}")
+            return np.array([], dtype=np.float32)
+
+def process_audio_entry(entry):
+    """Process a single entry and add audio array."""
+    try:
+        # Load audio segment
+        audio_array = load_audio_segment_robust(
+            entry['audio_path'], 
+            entry['start_time'], 
+            entry['end_time'], 
+            entry['sampling_rate']
+        )
+        
+        # Create final entry with proper HuggingFace format
+        final_entry = {
+            'client_id': entry['client_id'],
+            'path': entry['path'],
+            'audio': {
+                'path': entry['audio_path'],
+                'array': audio_array.tolist(),  # Convert to list
+                'sampling_rate': entry['sampling_rate']
+            },
+            'sentence': entry['sentence'],
+            'up_votes': entry['up_votes'],
+            'down_votes': entry['down_votes'],
+            'age': entry['age'],
+            'gender': entry['gender'],
+            'accent': entry['accent'],
+            'locale': entry['locale'],
+            'segment': entry['segment']
+        }
+        return final_entry
+    except Exception as e:
+        print(f"Error processing audio entry: {e}")
+        return None
+
+def process_entries_batch_multiprocess(entries_batch, num_processes=2):
+    """Process a batch of entries with multiprocessing and add audio arrays."""
+    if num_processes <= 1:
+        # Single process fallback
+        processed_entries = []
+        for entry in entries_batch:
+            result = process_audio_entry(entry)
+            if result is not None:
+                processed_entries.append(result)
+        return processed_entries
+    
+    try:
+        with Pool(processes=num_processes) as pool:
+            results = pool.map(process_audio_entry, entries_batch)
+        
+        # Filter out None results (failed processing)
+        processed_entries = [r for r in results if r is not None]
+        return processed_entries
+    except Exception as e:
+        print(f"Multiprocessing failed, falling back to single process: {e}")
+        # Fallback to single process
+        processed_entries = []
+        for entry in entries_batch:
+            result = process_audio_entry(entry)
+            if result is not None:
+                processed_entries.append(result)
+        return processed_entries
 
 def load_csv_test_intervals(csv_path):
     """Load test intervals from CSV file."""
@@ -376,49 +481,14 @@ def split_train_test(all_entries, test_intervals, seed=42):
     
     return train_entries, test_entries
 
-def process_entries_batch(entries_batch):
-    """Process a batch of entries and add audio arrays."""
-    processed_entries = []
-    
-    for entry in entries_batch:
-        # Load audio segment
-        audio_array = load_audio_segment(
-            entry['audio_path'], 
-            entry['start_time'], 
-            entry['end_time'], 
-            entry['sampling_rate']
-        )
-        
-        # Create final entry with proper HuggingFace format (using your audio workaround)
-        final_entry = {
-            'client_id': entry['client_id'],
-            'path': entry['path'],
-            'audio': {
-                'path': entry['audio_path'],
-                'array': audio_array.tolist(),  # Convert to list as in your workaround
-                'sampling_rate': entry['sampling_rate']
-            },
-            'sentence': entry['sentence'],
-            'up_votes': entry['up_votes'],
-            'down_votes': entry['down_votes'],
-            'age': entry['age'],
-            'gender': entry['gender'],
-            'accent': entry['accent'],
-            'locale': entry['locale'],
-            'segment': entry['segment']
-        }
-        processed_entries.append(final_entry)
-    
-    return processed_entries
-
-def create_dataset_from_entries(entries, name, batch_size=1000):
-    """Create a HuggingFace Dataset from entries with proper Audio feature."""
+def create_dataset_from_entries(entries, name, batch_size=500, audio_processes=2):
+    """Create a HuggingFace Dataset from entries with proper Audio feature and multiprocessing."""
     if not entries:
         return None
     
     print(f"Creating {name} dataset with {len(entries)} entries...")
     
-    # Define features with your audio workaround (nested dict structure)
+    # Define features with audio workaround (nested dict structure)
     features = Features({
         'client_id': Value(dtype='string'),
         'path': Value(dtype='string'),
@@ -440,11 +510,14 @@ def create_dataset_from_entries(entries, name, batch_size=1000):
     # Process entries in batches to avoid memory issues
     all_processed_entries = []
     
+    total_batches = (len(entries) + batch_size - 1) // batch_size
+    
     for i in range(0, len(entries), batch_size):
         batch = entries[i:i + batch_size]
-        print(f"Processing batch {i//batch_size + 1}/{(len(entries) + batch_size - 1)//batch_size}")
+        batch_num = i // batch_size + 1
+        print(f"Processing batch {batch_num}/{total_batches}")
         
-        processed_batch = process_entries_batch(batch)
+        processed_batch = process_entries_batch_multiprocess(batch, audio_processes)
         all_processed_entries.extend(processed_batch)
         
         # Force garbage collection after each batch
@@ -471,6 +544,10 @@ if __name__ == "__main__":
     if args.number_of_processes > max_processes:
         print(f"Warning: Requested {args.number_of_processes} processes, but only {max_processes} available")
         args.number_of_processes = max_processes
+    
+    if args.audio_batch_processes > max_processes // 2:
+        print(f"Warning: Requested {args.audio_batch_processes} audio processes, limiting to {max_processes // 2}")
+        args.audio_batch_processes = max(1, max_processes // 2)
     
     try:
         # Load TextGrid file paths
@@ -505,14 +582,18 @@ if __name__ == "__main__":
         
         # Create datasets from entries with audio loading
         print("Creating train dataset...")
-        train_dataset = create_dataset_from_entries(train_entries, "train", args.batch_size)
+        train_dataset = create_dataset_from_entries(
+            train_entries, "train", args.batch_size, args.audio_batch_processes
+        )
         
         # Clear train entries from memory
         del train_entries
         gc.collect()
         
         print("Creating test dataset...")
-        test_dataset = create_dataset_from_entries(test_entries, "test", args.batch_size)
+        test_dataset = create_dataset_from_entries(
+            test_entries, "test", args.batch_size, args.audio_batch_processes
+        )
         
         # Clear test entries from memory
         del test_entries
