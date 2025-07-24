@@ -38,9 +38,9 @@ $ uv pip install -r requirements.txt  # installiert exakte Versionen
 Der Datenverarbeitungsprozess erfolgt in zwei Hauptschritten:
 
 1. **Audio-Resampling**: `resample44k16k.py` konvertiert alle WAV-Dateien von 44,1 kHz auf 16 kHz
-2. **Dataset-Erstellung**: `TextGrids2Dataset.py` verarbeitet TextGrid-Dateien und erstellt Train/Test-Splits
+2. **Dataset-Erstellung**: `Textgrid2DatasetBatch.py` (ersetzt das alte `TextGrids2Dataset.py`) verarbeitet TextGrid-Dateien und erstellt Train/Test-Splits mit optimierter Multiprocessing-Architektur
 
-Das `clean_TextGrids.py` Modul wird automatisch von `TextGrids2Dataset.py` verwendet, um störende Elemente zu filtern (z.B. "(buzz) anon (buzz)" Muster, leere Texte, zu kurze Audio-Segmente).
+Das `clean_TextGrids.py` Modul wird automatisch von `Textgrid2DatasetBatch.py` verwendet, um störende Elemente zu filtern (z.B. "(buzz) anon (buzz)" Muster, leere Texte, zu kurze Audio-Segmente).
 
 ### Downsampling 44,1 kHz zu 16 kHz
 
@@ -57,17 +57,19 @@ Zunächst werden die Original-Audioaufnahmen komprimiert, und zwar von 44,1 kHz 
 
 Die Textgrids und Audios (16 kHz) werden in ein DataSetDict gespeichert. Das DataSetDict besteht aus zwei Datasets, eines für Training (80%) und eines zum Testen (20%). Das Test-Set besteht, unter anderem, aus den händisch-kurierten Intervallen, die in einer CSV-Datei spezifiziert werden können. 
 
-Das Skript nutzt parallele Verarbeitung und Parquet-Dateien als Zwischenspeicher für Memory-Effizienz. Zusätzlich werden die Daten automatisch bereinigt (z.B. Entfernung von "(buzz) anon (buzz)" Mustern und leeren Intervallen) über das `clean_TextGrids.py` Modul.
+Das Skript `Textgrid2DatasetBatch.py` nutzt eine verbesserte Multiprocessing-Architektur mit robusten Audio-Handling für große Dateien und Parquet-Dateien als Zwischenspeicher für Memory-Effizienz. Zusätzlich werden die Daten automatisch bereinigt (z.B. Entfernung von "(buzz) anon (buzz)" Mustern und leeren Intervallen) über das `clean_TextGrids.py` Modul.
 
 Folgende Optionen stehen zur Verfügung:
 
 - `-f`, `--folder`: Pfad zum Ordner mit TextGrid-Dateien (erforderlich)
-- `-o`, `--output_folder`: Pfad für das finale DataSetDict (erforderlich)
-- `-n`, `--number_of_processes`: Anzahl paralleler Prozesse (Standard: 4)
+- `-o`, `--output_folder`: Pfad für das finale DataSetDict (erforderlich)  
+- `-n`, `--number_of_processes`: Anzahl paralleler Prozesse für TextGrid-Verarbeitung (Standard: 4)
 - `-c`, `--csv_file`: CSV-Datei mit Test-Set Intervallen (optional, siehe unten)
+- `--batch_size`: Batch-Größe für die Verarbeitung von Einträgen (Standard: 500)
+- `--audio_batch_processes`: Anzahl der Prozesse für Audio-Batch-Verarbeitung (Standard: 2)
 
 ```bash
-(.venv)$ python scripts/TextGrids2Dataset.py -f data -o output_dataset -n 4 -c test_intervals.csv
+(.venv)$ python scripts/Textgrid2DatasetBatch.py -f data -o output_dataset -n 120 --batch_size 500 --audio_batch_processes 8
 ```
 
 #### CSV-Format für Test-Set Definition
