@@ -19,3 +19,9 @@ tmp*
 parquet*
 slides*
 LangAgeDataSet*
+
+# Logs
+logs/
+*.log
+*.out
+*.err
