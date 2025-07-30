@@ -1,3 +1,59 @@
+Metadata-Version: 2.4
+Name: tts-langage
+Version: 0.1.0
+Summary: TTS Language Age Dataset Processing and Whisper Fine-tuning
+Author-email: Hanno Müller <hanno.mueller@hpi.de>
+License: MIT
+Project-URL: Homepage, https://github.com/hanno-mueller-HPI/TTS-LangAge
+Project-URL: Repository, https://github.com/hanno-mueller-HPI/TTS-LangAge
+Project-URL: Issues, https://github.com/hanno-mueller-HPI/TTS-LangAge/issues
+Keywords: whisper,speech,tts,fine-tuning,language,age
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Multimedia :: Sound/Audio :: Speech
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: torch
+Requires-Dist: transformers
+Requires-Dist: datasets
+Requires-Dist: accelerate
+Requires-Dist: evaluate
+Requires-Dist: librosa
+Requires-Dist: soundfile
+Requires-Dist: sounddevice
+Requires-Dist: torchcodec
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: chardet
+Requires-Dist: jupyter
+Requires-Dist: ipykernel
+Requires-Dist: tqdm
+Requires-Dist: rich
+Requires-Dist: click
+Requires-Dist: jiwer>=4.0.0
+Requires-Dist: tensorboard>=2.20.0
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pytest-cov; extra == "dev"
+Requires-Dist: black; extra == "dev"
+Requires-Dist: isort; extra == "dev"
+Requires-Dist: flake8; extra == "dev"
+Requires-Dist: mypy; extra == "dev"
+Provides-Extra: gpu
+Requires-Dist: torch[cuda]; extra == "gpu"
+Requires-Dist: accelerate[cuda]; extra == "gpu"
+Provides-Extra: metrics
+Requires-Dist: jiwer; extra == "metrics"
+Requires-Dist: tensorboard; extra == "metrics"
+Requires-Dist: wandb; extra == "metrics"
+Provides-Extra: all
+Requires-Dist: tts-langage[dev,gpu,metrics]; extra == "all"
+
 # KI-Transkripte als linguistische Forschungsdaten: Feintuning eines Modells für das gesprochene Französisch mit Integration prosodischer Daten
 
 ## Preambel
@@ -96,23 +152,6 @@ Das Skript teilt die Daten folgendermaßen auf:
 3. **Train-Set**: Alle übrigen Daten (ca. 80%) werden für das Training verwendet
 
 Diese Methode stellt sicher, dass wichtige oder händisch-kuratierte Intervalle im Test-Set landen, während gleichzeitig eine ausgewogene Aufteilung gewährleistet wird.
-
-
----
-Work in progress
----
-
-DataSetDict transformieren zu log Mel Spektrogrammen.
-
-```bash
-(.venv)$ sbatch run_dataset_preprocess_batch_full.sbatch
-```
-
-Whisper mit mehreren GPUs fine-tunen.
-
-```bash
-(.venv)$ ./scripts/run_distributed_training.sh
-```
 
 
 ## Sonstiges

@@ -14,11 +14,13 @@ __pycache__/
 .Python
 
 # Data
+whisper_refined*
 data*
 tmp*
 parquet*
 slides*
 LangAgeDataSet*
+Dataset2LogMelSpec*
 
 # Logs
 logs/

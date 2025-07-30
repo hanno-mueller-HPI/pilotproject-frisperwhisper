@@ -15,7 +15,7 @@ from transformers import (
     WhisperFeatureExtractor,
     WhisperTokenizer
 )
-from datasets import DatasetDict, load_from_disk
+from datasets import DatasetDict, Dataset, load_from_disk
 
 
 ### Function Definitions #####################################################
@@ -53,6 +53,12 @@ def parse_arguments():
         type=int,
         default=42,
         help="Random seed for shuffling datasets (default: 42)"
+    )
+    parser.add_argument(
+        "--max_samples",
+        type=int,
+        default=None,
+        help="Maximum number of samples to process per split (for testing). If not specified, processes all samples."
     )
     return parser.parse_args()
 
@@ -129,7 +135,7 @@ def prepare_dataset(batch, feature_extractor, tokenizer):
     ).input_features[0]
     
     # Encode target text to label ids
-    batch["labels"] = tokenizer(batch["text"]).input_ids
+    batch["labels"] = tokenizer(batch["sentence"]).input_ids
     
     return batch
 
@@ -148,7 +154,18 @@ if __name__ == "__main__":
     # Load the LangAge dataset from disk
     print(f"Loading dataset from {args.input_dataset}")
     try:
-        dataset_dict = load_from_disk(args.input_dataset)
+        # Try loading as DatasetDict first
+        try:
+            dataset_dict = DatasetDict.load_from_disk(args.input_dataset)
+            print(f"Loaded as DatasetDict. Splits: {list(dataset_dict.keys())}")
+        except Exception:
+            dataset_obj = load_from_disk(args.input_dataset)
+            if isinstance(dataset_obj, Dataset):
+                print("Loaded as single Dataset.")
+                dataset_dict = DatasetDict({"train": dataset_obj})
+            else:
+                raise ValueError("Could not load dataset as Dataset or DatasetDict.")
+        
         print(f"Dataset loaded successfully!")
         print(f"Available splits: {list(dataset_dict.keys())}")
         
@@ -160,7 +177,7 @@ if __name__ == "__main__":
         
         # Display dataset sizes
         for split_name, split_data in dataset_dict.items():
-            print(f"{split_name.capitalize()} dataset size: {len(split_data)} samples")
+            print(f"{str(split_name).capitalize()} dataset size: {len(split_data)} samples")
         
     except Exception as e:
         print(f"Error loading dataset: {e}")
@@ -185,19 +202,35 @@ if __name__ == "__main__":
     for split_name, split_dataset in dataset_dict.items():
         print(f"\nProcessing {split_name} split...")
         print(f"Original columns: {split_dataset.column_names}")
+        print(f"Original dataset size: {len(split_dataset)} samples")
+        
+        # Limit samples if max_samples is specified
+        if args.max_samples is not None and len(split_dataset) > args.max_samples:
+            print(f"Limiting to {args.max_samples} samples for testing...")
+            split_dataset = split_dataset.select(range(args.max_samples))
+            print(f"Limited dataset size: {len(split_dataset)} samples")
         
         # Shuffle dataset if it's the train split
         if split_name == "train":
             print(f"Shuffling {split_name} split with seed {args.shuffle_seed}")
             split_dataset = split_dataset.shuffle(seed=args.shuffle_seed)
         
-        # Apply preprocessing
-        processed_split = split_dataset.map(
-            prepare_dataset_with_processors,
-            remove_columns=split_dataset.column_names,
-            num_proc=num_cpus,
-            desc=f"Processing {split_name} split"
-        )
+        # Apply preprocessing - use single process for small datasets
+        if len(split_dataset) <= 100:
+            print(f"Small dataset detected. Using single process...")
+            processed_split = split_dataset.map(
+                prepare_dataset_with_processors,
+                remove_columns=split_dataset.column_names,
+                desc=f"Processing {split_name} split"
+            )
+        else:
+            print(f"Processing with {num_cpus} processes...")
+            processed_split = split_dataset.map(
+                prepare_dataset_with_processors,
+                remove_columns=split_dataset.column_names,
+                num_proc=num_cpus,
+                desc=f"Processing {split_name} split"
+            )
         
         print(f"Processed {split_name} split: {len(processed_split)} samples")
         print(f"New columns: {processed_split.column_names}")

@@ -10,6 +10,7 @@ import os
 import argparse
 import torch
 import multiprocessing
+import gc
 from dataclasses import dataclass
 from typing import Any, Dict, List, Union
 
@@ -24,9 +25,13 @@ from transformers import (
 from datasets import DatasetDict, load_from_disk
 import evaluate
 
+# Enable proper multi-GPU support
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 
 ### Class Definitions ########################################################
 
+@dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
     processor: Any
     decoder_start_token_id: int
@@ -51,6 +56,14 @@ class DataCollatorSpeechSeq2SeqWithPadding:
             labels = labels[:, 1:]
 
         batch["labels"] = labels
+        
+        # Ensure all tensors are on the same device and have proper dtype
+        for key, tensor in batch.items():
+            if isinstance(tensor, torch.Tensor):
+                if key == "labels":
+                    batch[key] = tensor.long()
+                else:
+                    batch[key] = tensor.float()
 
         return batch
 
@@ -182,45 +195,57 @@ def configure_hardware(args):
     
     print(f"Using {num_cpus} CPU cores for data loading")
     
-    # Configure GPUs
-    available_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
-    print(f"Available GPUs: {available_gpus}")
-    
-    if available_gpus > 0:
-        for i in range(available_gpus):
-            gpu_name = torch.cuda.get_device_name(i)
-            gpu_memory = torch.cuda.get_device_properties(i).total_memory / 1024**3
-            print(f"  GPU {i}: {gpu_name} ({gpu_memory:.1f} GB)")
-    
-    if args.num_gpus is not None:
-        if args.num_gpus > available_gpus:
-            print(f"Warning: Requested {args.num_gpus} GPUs, but only {available_gpus} available. Using {available_gpus}.")
-            num_gpus = available_gpus
-        elif args.num_gpus < 0:
-            print("Error: Number of GPUs cannot be negative.")
-            raise ValueError("Invalid number of GPUs specified")
-        else:
-            num_gpus = args.num_gpus
-    else:
-        # Use all available GPUs
-        num_gpus = available_gpus
-        print(f"Auto-detect mode: using {num_gpus} GPUs (all available)")
-    
-    if num_gpus > 0:
-        print(f"Using {num_gpus} GPUs for training")
-        # Enable GPU optimizations
-        torch.backends.cudnn.benchmark = True
-        torch.backends.cuda.matmul.allow_tf32 = True
-        torch.backends.cudnn.allow_tf32 = True
+    # Configure GPUs - handle distributed training
+    if "WORLD_SIZE" in os.environ and int(os.environ["WORLD_SIZE"]) > 1:
+        # Distributed training mode
+        local_rank = int(os.environ.get("LOCAL_RANK", 0))
+        world_size = int(os.environ.get("WORLD_SIZE", 1))
         
-        # Set visible devices if using subset of GPUs
-        if num_gpus < available_gpus:
-            gpu_ids = ','.join(str(i) for i in range(num_gpus))
-            os.environ['CUDA_VISIBLE_DEVICES'] = gpu_ids
-            print(f"Set CUDA_VISIBLE_DEVICES to: {gpu_ids}")
+        print(f"Distributed training mode: {world_size} total processes")
+        print(f"Local GPU: {local_rank}")
+        print(f"Current GPU: {torch.cuda.get_device_name(local_rank)} ({torch.cuda.get_device_properties(local_rank).total_memory / 1024**3:.1f} GB)")
+        
+        num_gpus = 1  # Each process handles 1 GPU in distributed mode
     else:
-        print("Error: No GPUs available for training!")
-        raise RuntimeError("GPU training script requires at least 1 GPU")
+        # Single node mode
+        available_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
+        print(f"Available GPUs: {available_gpus}")
+        
+        if available_gpus > 0:
+            for i in range(available_gpus):
+                gpu_name = torch.cuda.get_device_name(i)
+                gpu_memory = torch.cuda.get_device_properties(i).total_memory / 1024**3
+                print(f"  GPU {i}: {gpu_name} ({gpu_memory:.1f} GB)")
+        
+        if args.num_gpus is not None:
+            if args.num_gpus > available_gpus:
+                print(f"Warning: Requested {args.num_gpus} GPUs, but only {available_gpus} available. Using {available_gpus}.")
+                num_gpus = available_gpus
+            elif args.num_gpus < 0:
+                print("Error: Number of GPUs cannot be negative.")
+                raise ValueError("Invalid number of GPUs specified")
+            else:
+                num_gpus = args.num_gpus
+        else:
+            # Use all available GPUs
+            num_gpus = available_gpus
+            print(f"Auto-detect mode: using {num_gpus} GPUs (all available)")
+        
+        if num_gpus > 0:
+            print(f"Using {num_gpus} GPUs for training")
+            # Enable GPU optimizations
+            torch.backends.cudnn.benchmark = True
+            torch.backends.cuda.matmul.allow_tf32 = True
+            torch.backends.cudnn.allow_tf32 = True
+            
+            # Set visible devices if using subset of GPUs
+            if num_gpus < available_gpus:
+                gpu_ids = ','.join(str(i) for i in range(num_gpus))
+                os.environ['CUDA_VISIBLE_DEVICES'] = gpu_ids
+                print(f"Set CUDA_VISIBLE_DEVICES to: {gpu_ids}")
+        else:
+            print("Error: No GPUs available for training!")
+            raise RuntimeError("GPU training script requires at least 1 GPU")
     
     # Configure data loading workers
     if args.dataloader_workers is not None:
@@ -228,7 +253,7 @@ def configure_hardware(args):
         print(f"Using {dataloader_workers} data loader workers (user specified)")
     else:
         # Calculate optimal workers from available CPUs
-        dataloader_workers = min(num_cpus, num_gpus * 2)
+        dataloader_workers = min(num_cpus, 8)  # Cap at 8 for stability
         dataloader_workers = max(1, dataloader_workers)
         print(f"Using {dataloader_workers} data loader workers (auto-calculated)")
     
@@ -284,8 +309,8 @@ def validate_dataset(dataset_dict):
     print("=" * 27)
 
 
-def compute_metrics(pred, tokenizer, metric):
-    """Compute Word Error Rate (WER) metric for evaluation."""
+def compute_metrics(pred, tokenizer, metric=None):
+    """Compute evaluation metrics. Uses WER if available, otherwise accuracy."""
     pred_ids = pred.predictions
     label_ids = pred.label_ids
     
@@ -296,11 +321,20 @@ def compute_metrics(pred, tokenizer, metric):
     pred_str = tokenizer.batch_decode(pred_ids, skip_special_tokens=True)
     label_str = tokenizer.batch_decode(label_ids, skip_special_tokens=True)
     
-    # Compute WER
-    wer_result = metric.compute(predictions=pred_str, references=label_str)
-    wer = 100 * wer_result
+    if metric is not None:
+        try:
+            # Try to compute WER
+            wer_result = metric.compute(predictions=pred_str, references=label_str)
+            wer = 100 * wer_result
+            return {"wer": wer}
+        except Exception as e:
+            print(f"Warning: Could not compute WER metric: {e}")
     
-    return {"wer": wer}
+    # Fallback to simple accuracy metric
+    correct = sum(1 for pred, label in zip(pred_str, label_str) if pred.strip() == label.strip())
+    accuracy = correct / len(pred_str) if len(pred_str) > 0 else 0.0
+    
+    return {"accuracy": accuracy * 100}
 
 
 ### main ######################################################################
@@ -308,8 +342,33 @@ def compute_metrics(pred, tokenizer, metric):
 if __name__ == "__main__":
     print("Starting Whisper GPU fine-tuning on preprocessed dataset...")
     
-    # Parse command line arguments
+    # Parse command line arguments first
     args = parse_arguments()
+    
+    # Initialize distributed training if using torchrun/multiple GPUs
+    if "WORLD_SIZE" in os.environ and int(os.environ["WORLD_SIZE"]) > 1:
+        # Running with torchrun - distributed training
+        local_rank = int(os.environ.get("LOCAL_RANK", 0))
+        world_size = int(os.environ.get("WORLD_SIZE", 1))
+        rank = int(os.environ.get("RANK", 0))
+        
+        print(f"Distributed training detected: rank {rank}/{world_size}, local_rank {local_rank}")
+        
+        torch.cuda.set_device(local_rank)
+        torch.distributed.init_process_group(
+            backend="nccl",
+            init_method="env://",
+            world_size=world_size,
+            rank=rank
+        )
+        
+        # Only print from the main process
+        if rank != 0:
+            import sys
+            import logging
+            logging.getLogger().setLevel(logging.WARNING)
+    else:
+        print("Single GPU or DataParallel training mode")
     
     # Configure CPU and GPU resources
     num_cpus, num_gpus, dataloader_workers = configure_hardware(args)
@@ -365,6 +424,31 @@ if __name__ == "__main__":
     model.generation_config.language = "french"
     model.generation_config.task = "transcribe"
     model.generation_config.forced_decoder_ids = None
+    model.generation_config.use_cache = False  # Disable cache for training
+    
+    # Disable caching in the model config to avoid multi-GPU issues
+    model.config.use_cache = False
+    
+    # Check if we're in distributed mode
+    is_distributed = "WORLD_SIZE" in os.environ and int(os.environ["WORLD_SIZE"]) > 1
+    
+    # Additional memory optimizations for distributed training
+    if is_distributed:
+        # Force garbage collection
+        gc.collect()
+        torch.cuda.empty_cache()
+        
+        # Set memory fraction to avoid fragmentation - be more conservative
+        if torch.cuda.is_available():
+            torch.cuda.set_per_process_memory_fraction(0.75)  # Use only 75% of GPU memory per process
+            
+        # Additional memory optimizations
+        torch.backends.cudnn.benchmark = False  # Disable for memory savings
+        
+        # Move model to current device immediately after loading
+        model = model.to(f"cuda:{torch.cuda.current_device()}")
+        torch.cuda.empty_cache()
+        gc.collect()
     
     print("Model and processors loaded successfully!")
     
@@ -374,8 +458,13 @@ if __name__ == "__main__":
         decoder_start_token_id=model.config.decoder_start_token_id,
     )
     
-    # Initialize evaluation metric
-    metric = evaluate.load("wer")
+    # Initialize evaluation metric (optional)
+    metric = None
+    try:
+        metric = evaluate.load("wer")
+        print("WER metric loaded successfully")
+    except Exception as e:
+        print(f"Warning: Could not load WER metric ({e}). Will use accuracy instead.")
     
     def compute_metrics_with_deps(pred):
         return compute_metrics(pred, tokenizer, metric)
@@ -383,14 +472,20 @@ if __name__ == "__main__":
     # Configure training parameters
     print("Setting up training configuration...")
     
-    # Calculate batch sizes if not specified
+    # Calculate batch sizes if not specified - reduce for distributed training
     if args.per_device_train_batch_size is None:
-        per_device_train_batch_size = 32 if num_gpus > 1 else 16
+        if is_distributed:
+            per_device_train_batch_size = 1  # Very small batch for distributed training to avoid OOM
+        else:
+            per_device_train_batch_size = 32 if num_gpus > 1 else 16
     else:
         per_device_train_batch_size = args.per_device_train_batch_size
     
     if args.per_device_eval_batch_size is None:
-        per_device_eval_batch_size = 16 if num_gpus > 1 else 8
+        if is_distributed:
+            per_device_eval_batch_size = 1  # Very small eval batch for distributed training
+        else:
+            per_device_eval_batch_size = 16 if num_gpus > 1 else 8
     else:
         per_device_eval_batch_size = args.per_device_eval_batch_size
     
@@ -402,11 +497,11 @@ if __name__ == "__main__":
     training_args = Seq2SeqTrainingArguments(
         output_dir=args.output_dir,
         per_device_train_batch_size=per_device_train_batch_size,
-        gradient_accumulation_steps=args.gradient_accumulation_steps,
+        gradient_accumulation_steps=4 if is_distributed else args.gradient_accumulation_steps,  # Moderate accumulation for distributed
         learning_rate=args.learning_rate,
         warmup_steps=args.warmup_steps,
         max_steps=args.max_steps,
-        gradient_checkpointing=True,
+        gradient_checkpointing=False,  # Disable gradient checkpointing to avoid graph issues in distributed training
         fp16=True,
         eval_strategy="steps",
         per_device_eval_batch_size=per_device_eval_batch_size,
@@ -415,14 +510,25 @@ if __name__ == "__main__":
         save_steps=args.save_steps,
         eval_steps=args.eval_steps,
         logging_steps=args.logging_steps,
-        report_to=["tensorboard"],
+        report_to=["tensorboard"] if not is_distributed or int(os.environ.get("RANK", 0)) == 0 else [],
         load_best_model_at_end=True,
-        metric_for_best_model="wer",
+        metric_for_best_model="eval_loss",  # Use loss instead of WER since WER might not be available
         greater_is_better=False,
         push_to_hub=False,
-        dataloader_num_workers=dataloader_workers,
-        ddp_find_unused_parameters=False if num_gpus > 1 else None,
-        dataloader_pin_memory=True,
+        dataloader_num_workers=2 if is_distributed else min(dataloader_workers, 4),  # Reduce workers for distributed
+        ddp_find_unused_parameters=False,
+        dataloader_pin_memory=False if is_distributed else True,  # Disable pin memory for distributed to save memory
+        remove_unused_columns=False,  # Keep all columns to avoid issues with custom data collator
+        # Distributed training settings
+        ddp_backend="nccl" if is_distributed else None,
+        group_by_length=False,  # Disable to avoid issues with variable-length sequences
+        save_on_each_node=False,  # Only save on main node
+        logging_first_step=True,
+        # Memory optimizations for distributed training
+        max_grad_norm=1.0,  # Gradient clipping
+        optim="adamw_torch" if is_distributed else "adamw_hf",  # Use torch optimizer for better memory management
+        ddp_bucket_cap_mb=25 if is_distributed else None,  # Reduce DDP bucket size for memory efficiency
+        dataloader_drop_last=True,  # Drop last incomplete batch for consistent training
     )
     
     # Initialize trainer
@@ -434,7 +540,7 @@ if __name__ == "__main__":
         eval_dataset=eval_dataset,
         data_collator=data_collator,
         compute_metrics=compute_metrics_with_deps,
-        tokenizer=processor.feature_extractor,
+        processing_class=processor.feature_extractor,  # Use processing_class instead of tokenizer
     )
     
     print("Starting training...")
