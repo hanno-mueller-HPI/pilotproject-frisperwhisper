@@ -78,8 +78,9 @@ def should_remove_very_short_audio(entry, min_duration_seconds=0.1):
     audio_array = audio_data.get('array', [])
     sampling_rate = audio_data.get('sampling_rate', 16000)
     
-    if not audio_array:
-        logger.debug(f"Removing entry with no audio data")
+    # Check for completely missing or empty audio array
+    if not audio_array or len(audio_array) == 0:
+        logger.debug(f"Removing entry with empty audio array")
         return True
     
     duration_seconds = len(audio_array) / sampling_rate
@@ -91,7 +92,87 @@ def should_remove_very_short_audio(entry, min_duration_seconds=0.1):
     return False
 
 
-def clean_textgrid_entries(entries, remove_buzz_anon=True, remove_empty=True, remove_short_audio=True, min_duration=0.1):
+def should_remove_silent_audio(entry, silence_threshold=1e-6):
+    """
+    Check if an entry contains only silent audio (all zeros or near-zero values) and should be removed.
+    
+    Args:
+        entry (dict): Dataset entry with 'audio' field containing 'array'
+        silence_threshold (float): Threshold below which audio is considered silent
+        
+    Returns:
+        bool: True if the entry should be removed, False otherwise
+    """
+    # Only check processed entries with audio data
+    audio_data = entry.get('audio', {})
+    audio_array = audio_data.get('array', [])
+    
+    if not audio_array or len(audio_array) == 0:
+        # Empty audio arrays are handled by should_remove_very_short_audio
+        return False
+    
+    try:
+        import numpy as np
+        
+        # Convert to numpy array for efficient computation
+        arr = np.array(audio_array)
+        
+        # Check if all values are below the silence threshold
+        max_amplitude = np.max(np.abs(arr))
+        
+        if max_amplitude <= silence_threshold:
+            logger.debug(f"Removing entry with silent audio (max amplitude: {max_amplitude:.8f})")
+            return True
+            
+    except ImportError:
+        # Fallback without numpy - check if all values are exactly zero
+        max_abs_value = max(abs(x) for x in audio_array)
+        if max_abs_value <= silence_threshold:
+            logger.debug(f"Removing entry with silent audio (max amplitude: {max_abs_value:.8f})")
+            return True
+    except Exception as e:
+        logger.warning(f"Error checking for silent audio: {e}")
+        return False
+    
+    return False
+
+
+def should_remove_speaker(entry, speakers_to_remove=None):
+    """
+    Check if an entry belongs to a specific speaker that should be removed.
+    
+    Args:
+        entry (dict): Dataset entry with potential 'speaker', 'speaker_id', or 'speaker_name' field
+        speakers_to_remove (list or str): Speaker(s) to remove (e.g., ['speaker1'] or 'speaker1')
+        
+    Returns:
+        bool: True if the entry should be removed, False otherwise
+    """
+    if speakers_to_remove is None:
+        return False
+    
+    # Convert single speaker to list
+    if isinstance(speakers_to_remove, str):
+        speakers_to_remove = [speakers_to_remove]
+    
+    # Check various possible speaker field names
+    speaker_fields = ['speaker', 'speaker_id', 'speaker_name', 'spk', 'spk_id']
+    
+    for field in speaker_fields:
+        if field in entry:
+            speaker_value = str(entry[field]).strip().lower()
+            
+            # Check if current speaker should be removed
+            for speaker_to_remove in speakers_to_remove:
+                if speaker_value == str(speaker_to_remove).strip().lower():
+                    logger.debug(f"Removing entry from speaker: {entry[field]}")
+                    return True
+    
+    return False
+
+
+def clean_textgrid_entries(entries, remove_buzz_anon=True, remove_empty=True, remove_short_audio=True, 
+                          remove_silent_audio=True, remove_speakers=None, min_duration=0.1, silence_threshold=1e-6):
     """
     Apply all cleaning filters to a list of TextGrid entries.
     
@@ -100,7 +181,10 @@ def clean_textgrid_entries(entries, remove_buzz_anon=True, remove_empty=True, re
         remove_buzz_anon (bool): Whether to remove entries containing "(buzz) anon (buzz)"
         remove_empty (bool): Whether to remove empty or whitespace-only entries
         remove_short_audio (bool): Whether to remove very short audio segments
+        remove_silent_audio (bool): Whether to remove silent audio (all zeros)
+        remove_speakers (list or str): Speaker(s) to remove (e.g., ['speaker1'] or 'speaker1')
         min_duration (float): Minimum audio duration in seconds
+        silence_threshold (float): Threshold below which audio is considered silent
         
     Returns:
         list: Filtered list of entries
@@ -114,14 +198,21 @@ def clean_textgrid_entries(entries, remove_buzz_anon=True, remove_empty=True, re
     removed_counts = {
         'buzz_anon': 0,
         'empty': 0,
-        'short_audio': 0
+        'short_audio': 0,
+        'silent_audio': 0,
+        'speaker_filter': 0
     }
     
     for entry in entries:
         should_remove = False
         
+        # Check speaker filter first (most specific)
+        if remove_speakers and should_remove_speaker(entry, remove_speakers):
+            removed_counts['speaker_filter'] += 1
+            should_remove = True
+        
         # Check buzz anon pattern
-        if remove_buzz_anon and should_remove_buzz_anon(entry):
+        if not should_remove and remove_buzz_anon and should_remove_buzz_anon(entry):
             removed_counts['buzz_anon'] += 1
             should_remove = True
         
@@ -130,9 +221,14 @@ def clean_textgrid_entries(entries, remove_buzz_anon=True, remove_empty=True, re
             removed_counts['empty'] += 1
             should_remove = True
         
-        # Check short audio
+        # Check short audio (includes empty audio arrays)
         if not should_remove and remove_short_audio and should_remove_very_short_audio(entry, min_duration):
             removed_counts['short_audio'] += 1
+            should_remove = True
+        
+        # Check silent audio (all zeros)
+        if not should_remove and remove_silent_audio and should_remove_silent_audio(entry, silence_threshold):
+            removed_counts['silent_audio'] += 1
             should_remove = True
         
         if not should_remove:
@@ -143,7 +239,8 @@ def clean_textgrid_entries(entries, remove_buzz_anon=True, remove_empty=True, re
     if total_removed > 0:
         logger.info(f"Cleaning results: {original_count} -> {len(filtered_entries)} entries "
                    f"(removed {total_removed}: {removed_counts['buzz_anon']} buzz_anon, "
-                   f"{removed_counts['empty']} empty, {removed_counts['short_audio']} short_audio)")
+                   f"{removed_counts['empty']} empty, {removed_counts['short_audio']} short_audio, "
+                   f"{removed_counts['silent_audio']} silent_audio, {removed_counts['speaker_filter']} speaker_filter)")
     
     return filtered_entries
 

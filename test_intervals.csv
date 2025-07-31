@@ -1,8 +1,8 @@
 path,speaker,interval
-data/speaker1/conversation1.TextGrid,speaker1,5
-data/speaker1/conversation2.TextGrid,speaker1,12
-data/speaker1/conversation3.TextGrid,speaker1,8
-data/speaker2/conversation1.TextGrid,speaker2,3
-data/speaker2/conversation4.TextGrid,speaker2,15
-data/speaker3/conversation2.TextGrid,speaker3,7
-data/speaker3/conversation5.TextGrid,speaker3,21
+data/a001a.TextGrid,speaker1,5
+data/a001a.TextGrid,speaker1,12
+data/a001a.TextGrid,speaker1,8
+data/a001a.TextGrid,speaker2,3
+data/a001a.TextGrid,speaker2,15
+data/a001a.TextGrid,speaker2,7
+data/a001a.TextGrid,speaker2,21

@@ -18,46 +18,61 @@ Sollte UV nicht installiert sein, lässt es sich wie folgt installieren.
 $ curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-Anschließend kann die Virtuelle Umgebung erstellt und aktiviert werden.
+Anschließend kann die virtuelle Umgebung erstellt und aktiviert werden.
 
 ```bash
 $ uv venv .venv # erstellt eine virtual environment mit dem Namen ".venv"
 $ source .venv/bin/activate # aktiviert die virtual environment
 ```
 
-Dann werden die benötigten Pakete installiert. UV sorgt dafür, dass die exaktern Versionen installiert werden.
+Dann werden die benötigten Pakete installiert. UV sorgt dafür, dass die exakten Versionen installiert werden.
 
 ```bash
-$ uv pip install -r requirements.txt  # installiert exakte Versionen
+(.venv)$ uv sync --active  # installiert exakte Versionen
 ```
 
 ## Datenverarbeitung
 
 ### Workflow-Übersicht
 
-Der Datenverarbeitungsprozess erfolgt in zwei Hauptschritten:
+Der Datenverarbeitungsprozess erfolgt in den folgenden Schritten:
 
-1. **Audio-Resampling**: `resample44k16k.py` konvertiert alle WAV-Dateien von 44,1 kHz auf 16 kHz
-2. **Dataset-Erstellung**: `Textgrid2DatasetBatch.py` (ersetzt das alte `TextGrids2Dataset.py`) verarbeitet TextGrid-Dateien und erstellt Train/Test-Splits mit optimierter Multiprocessing-Architektur
+1. **TRS zu TextGrid**: `trs2tg.py` transformiert Transkripte zu TextGrids.
+2. **Audio-Resampling**: `resample44k16k.py` konvertiert alle WAV-Dateien von 44,1 kHz auf 16 kHz
+3. **Dataset Dictionary**: `Textgrid2DatasetBatch.py` verarbeitet TextGrid-Dateien und erstellt Train/Test-Splits mit einer Multiprocessing-Architektur. Die erstellten Splits werden in einem HuggingFace Dataset Dictionary gespeichert. Dabei wird das `clean_TextGrids.py` Modul verwendet, um bestimmte Segmente herauszufiltern (z.B. Segmente mit einer Dauer unter 100 ms)
+4. **Log-Mel Spektrogramme**: Im Dataset Dictionary hinterlegte Audios werden zu Log-Mel Spektrogrammen transformiert.
 
-Das `clean_TextGrids.py` Modul wird automatisch von `Textgrid2DatasetBatch.py` verwendet, um störende Elemente zu filtern (z.B. "(buzz) anon (buzz)" Muster, leere Texte, zu kurze Audio-Segmente).
+### TRS zu TextGrid
+
+Transkripte werden mit dem Skript `trs2tg.py` zu TextGrids transformiert. Dafür müssen die Transkripte in den Ordner `data/LangAge16kHz` kopiert werden, wo die TextGrids zusammen mit den 16 kHz-Versionen der Audios gespeichert werden.
+
+```bash
+(.venv)$ python scripts/trs2tg.py data/LangAge16kHz
+```
 
 ### Downsampling 44,1 kHz zu 16 kHz
 
 Zunächst werden die Original-Audioaufnahmen komprimiert, und zwar von 44,1 kHz Sampling-Rate auf 16 kHz Sampling-Rate. Dies kann einige Zeit (d.h. Tage) dauern. Das Skript überschreibt die ursprünglichen Dateien mit den resampelten Versionen. Für den folgenden Befehl gibt es zwei Optionen:
 
-- `--input_folder`: Spezifiziert den zu verarbeitenden Ordner (sollte `./data` sein).
+- `--input_folder`: Spezifiziert den zu verarbeitenden Ordner (sollte `./data/LangAge16kHz` sein; original Dateien müssen vorher hierher kopiert werden).
 - `--processes`: Spezifiziert wie viele Aufnahmen gleichzeitig verarbeitet werden sollen; es können maximal so viele Prozesse ausgewählt werden, wie Cores zur Verfügung stehen. In der Praxis empfiehlt es sich, nicht mehr als die Hälfte der verfügbaren Cores zu verwenden.
 
 ```bash
-(.venv)$ python scripts/resample44k16k.py -i data -p 4
+(.venv)$ python scripts/resample44k16k.py -i data/LangAge16kHz -p 40
 ```
 
-### Erstellung des DataSetDict
+### Dataset Dictionary
 
-Die Textgrids und Audios (16 kHz) werden in ein DataSetDict gespeichert. Das DataSetDict besteht aus zwei Datasets, eines für Training (80%) und eines zum Testen (20%). Das Test-Set besteht, unter anderem, aus den händisch-kurierten Intervallen, die in einer CSV-Datei spezifiziert werden können. 
+Die Textgrids und Audios (16 kHz) werden als DataSet Dictionary (DataSetDict) gespeichert. Das DataSetDict besteht aus zwei Datasets, eines für Training (z.B. 80%) und eines zum Testen (z.B. 20%). Das Test-Set besteht, unter anderem, aus den händisch-kurierten Intervallen, die in einer CSV-Datei spezifiziert werden können. 
 
-Das Skript `Textgrid2DatasetBatch.py` nutzt eine verbesserte Multiprocessing-Architektur mit robusten Audio-Handling für große Dateien und Parquet-Dateien als Zwischenspeicher für Memory-Effizienz. Zusätzlich werden die Daten automatisch bereinigt (z.B. Entfernung von "(buzz) anon (buzz)" Mustern und leeren Intervallen) über das `clean_TextGrids.py` Modul.
+Das Skript `Textgrid2DatasetBatch.py` nutzt eine Multiprocessing-Architektur mit robusten Audio-Handling für große Dateien und für Memory-Effizienz. Zusätzlich werden die Daten automatisch via `clean_TextGrids.py` bereinigt:
+
+**Automatische Datenbereinigung:**
+- Entfernung zu kurzer Segmente (< 100ms)
+- Filterung stiller Audio-Segmente (nur Nullen)
+- Entfernung leerer Transkripte
+- Filterung spezifischer Sprecher (z.B. "spk1")
+- Entfernung von "(buzz) anon (buzz)" Mustern
 
 Folgende Optionen stehen zur Verfügung:
 
@@ -69,7 +84,7 @@ Folgende Optionen stehen zur Verfügung:
 - `--audio_batch_processes`: Anzahl der Prozesse für Audio-Batch-Verarbeitung (Standard: 2)
 
 ```bash
-(.venv)$ python scripts/Textgrid2DatasetBatch.py -f data -o output_dataset -n 120 --batch_size 500 --audio_batch_processes 8
+(.venv)$ python scripts/Textgrid2DatasetBatch.py -f data/LangAge16kHz -o data/LangAgeDataSetDict -n 150 --batch_size 500 --audio_batch_processes 8
 ```
 
 #### CSV-Format für Test-Set Definition
@@ -82,9 +97,9 @@ Falls eine CSV-Datei für die Test-Set Definition verwendet wird, muss sie folge
 Beispiel (`test_intervals.csv`):
 ```csv
 path,speaker,interval
-data/speaker1/file1.TextGrid,speaker1,5
-data/speaker1/file2.TextGrid,speaker1,12
-data/speaker2/file3.TextGrid,speaker2,3
+data/a001.TextGrid,speaker1,5
+data/a001.TextGrid.TextGrid,speaker1,12
+data/a001.TextGrid.TextGrid,speaker2,3
 ```
 
 #### Train/Test-Split Logik
@@ -97,22 +112,62 @@ Das Skript teilt die Daten folgendermaßen auf:
 
 Diese Methode stellt sicher, dass wichtige oder händisch-kuratierte Intervalle im Test-Set landen, während gleichzeitig eine ausgewogene Aufteilung gewährleistet wird.
 
+### Log-Mel Spektrogramme
 
----
-Work in progress
----
+Whisper wird mit Audios in Form von Log-Mel Spektrogrammen 'gefüttert'. Diese Spektrogramme werden mit `DataSet2LogMelSpecBatch.py` erstellt.
 
-DataSetDict transformieren zu log Mel Spektrogrammen.
+Folgende Optionen stehen zur Verfügung:
+
+- `-i`, `--input_dataset`: Pfad zum Eingabeordner mit dem LangAgeDataSet (HuggingFace Dataset, erforderlich)
+- `-o`, `--output_dataset`: Pfad, unter dem das vorverarbeitete Dataset gespeichert wird (erforderlich)
+- `--num_cpus`: Anzahl der zu verwendenden CPU-Kerne für die Vorverarbeitung. Wenn nicht angegeben, werden alle verfügbaren Kerne genutzt.
+- `--model_size`: Whisper-Modellgröße für die Feature-Extraktion (`tiny`, `base`, `small`, `medium`, `large`; Standard: `large`)
+- `--shuffle_seed`: Zufalls-Seed für das Mischen der Datasets (Standard: 42)
+- `--max_samples`: Maximale Anzahl zu verarbeitender Samples pro Split (für Tests). Wenn nicht angegeben, werden alle Samples verarbeitet.
+- `--batch_size`: Batch-Größe für die Verarbeitung von Dataset-Chunks (Standard: 1000)
+- `--writer_batch_size`: Batch-Größe für das Speichern auf die Festplatte (Standard: 100)
+- `--max_memory_per_worker`: Maximaler Speicher pro Worker in GB (Standard: 4.0)
 
 ```bash
-(.venv)$ sbatch run_dataset_preprocess_batch_full.sbatch
+(.venv)$ python scripts/Dataset2LogMelSpecBatch.py -i data/LangAgeDataSetDict -o data/LangAgeLogMelSpec --num_cpus 150 --batch_size 1000
 ```
+
+## Fine-tuning von Whisper
 
 Whisper mit mehreren GPUs fine-tunen.
 
 ```bash
 (.venv)$ ./scripts/run_distributed_training.sh
 ```
+
+## SLURM
+
+Für die Verarbeitung auf dem Cluster stehen verschiedene SLURM-Skripte zur Verfügung:
+
+### Dataset-Erstellung
+```bash
+(.venv)$ sbatch ./scripts/create_dataset.sbatch
+```
+
+### DataSet zu Log-Mel Spektrogrammen transformieren
+```bash
+(.venv)$ sbatch ./scripts/run_dataset_preprocess_batch.sbatch
+```
+
+### Whisper Training
+```bash
+(.venv)$ sbatch ./scripts/train_whisper_gpu.sbatch
+```
+
+### TODOs
+- [ ] Integriertes Training-Skript für End-to-End Pipeline
+- [ ] Automatisierte Evaluation nach dem Training
+- [ ] Multi-Node Training für sehr große Datasets
+- [ ] Checkpoint-Recovery für unterbrochene Jobs
+
+
+
+
 
 
 ## Sonstiges
@@ -122,5 +177,5 @@ Whisper mit mehreren GPUs fine-tunen.
 Das folgende Skript nimmt einen Ordner mit TextGrids als Input und schreibt in einen spezifizierten Outputfolder zwei CSV-Dateien. Diese Dateien listen Intervalle auf, die eine Länge von 0 ms haben sowie Intervalle, die sich überlappen.
 
 ```bash
-(.venv)$ python extract_empty_intervals_and_overlaps.py -f input_folder -o output_folder
+(.venv)$ python scripts/extract_empty_intervals_and_overlaps.py -f input_folder -o output_folder
 ```

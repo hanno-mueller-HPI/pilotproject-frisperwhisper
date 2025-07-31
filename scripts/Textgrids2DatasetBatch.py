@@ -261,13 +261,16 @@ def process_textgrid_lightweight(args_tuple):
         entries = textgrid.to_dataset_entries_lightweight()
         original_count = len(entries)
         
-        # Apply cleaning filters - now including short_audio with timing-based filtering
+        # Apply cleaning filters - including speaker1 removal, silent audio, and timing-based filtering
         cleaned_entries = clean_textgrid_entries(
             entries,
             remove_buzz_anon=True,
             remove_empty=True,
-            remove_short_audio=True,  # Enable duration-based filtering
-            min_duration=0.1
+            remove_short_audio=True,          # Enable duration-based filtering for empty/short audio
+            remove_silent_audio=True,         # Remove silent audio (all zeros)
+            remove_speakers=['spk1'],         # Remove all segments from speaker1
+            min_duration=0.1,                 # Minimum audio duration in seconds
+            silence_threshold=1e-6             # Threshold for detecting silent audio
         )
         
         cleaned_count = len(cleaned_entries)
