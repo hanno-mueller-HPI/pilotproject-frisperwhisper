@@ -51,12 +51,12 @@ export MKL_NUM_THREADS=1
 # ==============================
 
 echo "Starting dataset creation..."
-echo "Command: python scripts/Textgrids2DatasetBatch.py -f data -o LangAgeDataSetV2 -n 150 --batch_size 500 --audio_batch_processes 8"
+echo "Command: python scripts/Textgrids2DatasetBatch.py -f data/LangAge16kHz -o data/LangAgeDataSetDict -n 150 --batch_size 500 --audio_batch_processes 8"
 echo "=============================================="
 
 python scripts/Textgrids2DatasetBatch.py \
-    -f data \
-    -o LangAgeDataSetV2 \
+    -f data/LangAge16kHz \
+    -o data/LangAgeDataSetDict \
     -n 150 \
     --batch_size 500 \
     --audio_batch_processes 8
@@ -66,4 +66,4 @@ echo "Dataset creation completed at $(date)"
 
 # Show output directory structure
 echo "Output directory contents:"
-ls -la LangAgeDataSetV2/
+ls -la data/LangAgeDataSetDict/

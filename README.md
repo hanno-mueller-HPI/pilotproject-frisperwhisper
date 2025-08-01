@@ -84,7 +84,7 @@ Folgende Optionen stehen zur Verfügung:
 - `--audio_batch_processes`: Anzahl der Prozesse für Audio-Batch-Verarbeitung (Standard: 2)
 
 ```bash
-(.venv)$ python scripts/Textgrid2DatasetBatch.py -f data/LangAge16kHz -o data/LangAgeDataSetDict -n 150 --batch_size 500 --audio_batch_processes 8
+(.venv)$ python scripts/Textgrids2DatasetBatch.py -f data/LangAge16kHz -o data/LangAgeDataSetDict -n 150 --batch_size 500 --audio_batch_processes 8
 ```
 
 #### CSV-Format für Test-Set Definition
