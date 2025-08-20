@@ -84,7 +84,7 @@ Folgende Optionen stehen zur Verfügung:
 - `--audio_batch_processes`: Anzahl der Prozesse für Audio-Batch-Verarbeitung (Standard: 2)
 
 ```bash
-(.venv)$ python scripts/Textgrids2DatasetBatch.py -f data/LangAge16kHz -o data/LangAgeDataSetDict -n 150 --batch_size 500 --audio_batch_processes 8
+(.venv)$ python scripts/Textgrids2DatasetBatch.py -f data/LangAge16kHz -o data -n 150 --batch_size 500 --audio_batch_processes 8
 ```
 
 #### CSV-Format für Test-Set Definition
@@ -129,7 +129,7 @@ Folgende Optionen stehen zur Verfügung:
 - `--max_memory_per_worker`: Maximaler Speicher pro Worker in GB (Standard: 4.0)
 
 ```bash
-(.venv)$ python scripts/Dataset2LogMelSpecBatch.py -i data/LangAgeDataSetDict -o data/LangAgeLogMelSpec --num_cpus 150 --batch_size 1000
+(.venv)$ python scripts/Dataset2LogMelSpecBatch.py -i data/LangAgeDataSet -o data/LangAgeLogMelSpec --num_cpus 150 --batch_size 1000
 ```
 
 ## Fine-tuning von Whisper
@@ -155,8 +155,17 @@ Für die Verarbeitung auf dem Cluster stehen verschiedene SLURM-Skripte zur Verf
 ```
 
 ### Whisper Training
+
+Die Whisper-Modelle werden mit einer Versionsangabe gespeichert. Bei Verwendung von `-o FrisperWhisper -v v2` wird das Modell in `./FrisperWhisper/v2/` gespeichert.
+
+#### Single-Node Training (4 GPUs)
 ```bash
 (.venv)$ sbatch ./scripts/train_whisper_gpu.sbatch
+```
+
+#### Multi-Node Training (12 GPUs auf 4 Nodes)
+```bash
+(.venv)$ sbatch ./scripts/train_whisper_gpu_multinode.sbatch
 ```
 
 ### TODOs

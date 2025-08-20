@@ -7,8 +7,8 @@
 #SBATCH --time=24:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=98
-#SBATCH --mem=512G
+#SBATCH --cpus-per-task=100
+#SBATCH --mem=800G
 #SBATCH --constraint=ARCH:X86
 
 echo "=== SLURM Job Information ==="
@@ -36,15 +36,13 @@ mkdir -p logs/Dataset2LogMelSpec
 
 # Run the full dataset preprocessing with memory optimization
 echo "Starting memory-optimized dataset preprocessing (full dataset)..."
-echo "Command: python scripts/Dataset2LogMelSpecBatch.py -i LangAgeDataSet -o LangAgeDataSet_preprocessed_batch --num_cpus 98 --model_size large --batch_size 500 --max_memory_per_worker 3.0"
+echo "Command: python scripts/Dataset2LogMelSpecBatch.py -i data/LangAgeDataSet -o data/LangAgeLogMelSpec --num_cpus 100 --batch_size 400"
 
 python scripts/Dataset2LogMelSpecBatch.py \
-    -i LangAgeDataSet \
-    -o LangAgeDataSet_preprocessed_batch \
-    --num_cpus 98 \
-    --model_size large \
-    --batch_size 500 \
-    --max_memory_per_worker 3.0
+    -i data/LangAgeDataSet \
+    -o data/LangAgeLogMelSpec \
+    --num_cpus 100 \
+    --batch_size 400
 
 echo "Job completed at: $(date)"
 echo "Exit code: $?"

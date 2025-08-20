@@ -610,7 +610,7 @@ if __name__ == "__main__":
             })
             
             # Save the final dataset
-            output_path = Path(args.output_folder) / "LangAgeDataSet"
+            output_path = Path(args.output_folder)
             output_path.mkdir(parents=True, exist_ok=True)
             
             print(f"Saving DataSetDict to {output_path}...")

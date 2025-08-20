@@ -87,6 +87,12 @@ def parse_arguments():
         required=True,
         help="Directory where the fine-tuned model will be saved"
     )
+    parser.add_argument(
+        "-v", "--version",
+        type=str,
+        required=True,
+        help="Version subfolder for the model (e.g., 'v1', 'v2')"
+    )
     
     # Hardware configuration
     parser.add_argument(
@@ -345,6 +351,13 @@ if __name__ == "__main__":
     # Parse command line arguments first
     args = parse_arguments()
     
+    # Create full output path with version subfolder
+    full_output_dir = os.path.join(args.output_dir, args.version)
+    print(f"Model will be saved to: {full_output_dir}")
+    
+    # Create output directory if it doesn't exist
+    os.makedirs(full_output_dir, exist_ok=True)
+    
     # Initialize distributed training if using torchrun/multiple GPUs
     if "WORLD_SIZE" in os.environ and int(os.environ["WORLD_SIZE"]) > 1:
         # Running with torchrun - distributed training
@@ -495,7 +508,7 @@ if __name__ == "__main__":
     
     # Define training arguments
     training_args = Seq2SeqTrainingArguments(
-        output_dir=args.output_dir,
+        output_dir=full_output_dir,
         per_device_train_batch_size=per_device_train_batch_size,
         gradient_accumulation_steps=4 if is_distributed else args.gradient_accumulation_steps,  # Moderate accumulation for distributed
         learning_rate=args.learning_rate,
@@ -526,7 +539,7 @@ if __name__ == "__main__":
         logging_first_step=True,
         # Memory optimizations for distributed training
         max_grad_norm=1.0,  # Gradient clipping
-        optim="adamw_torch" if is_distributed else "adamw_hf",  # Use torch optimizer for better memory management
+        optim="adamw_torch", #if is_distributed else "adamw_hf",  # Use torch optimizer for better memory management
         ddp_bucket_cap_mb=25 if is_distributed else None,  # Reduce DDP bucket size for memory efficiency
         dataloader_drop_last=True,  # Drop last incomplete batch for consistent training
     )
@@ -544,7 +557,7 @@ if __name__ == "__main__":
     )
     
     print("Starting training...")
-    print(f"Model will be saved to: {args.output_dir}")
+    print(f"Model will be saved to: {full_output_dir}")
     print(f"Training on {len(train_dataset)} samples")
     print(f"Evaluating on {len(eval_dataset)} samples")
     print("-" * 50)
@@ -553,10 +566,10 @@ if __name__ == "__main__":
     trainer.train()
     
     print("Training completed!")
-    print(f"Model saved to: {args.output_dir}")
+    print(f"Model saved to: {full_output_dir}")
     
     # Save final model
     trainer.save_model()
-    processor.save_pretrained(args.output_dir)
+    processor.save_pretrained(full_output_dir)
     
     print("GPU fine-tuning completed successfully!")

@@ -10,9 +10,9 @@
 #SBATCH --nodes=1                           # Single node job
 #SBATCH --ntasks-per-node=1                 # One task per node
 #SBATCH --gpus-per-node=h100:4              # 4 H100 GPUs 
-#SBATCH --cpus-per-task=10                  # 10 CPU cores for data loading
+#SBATCH --cpus-per-task=100                  # 100 CPU cores for data loading
 #SBATCH --mem=1000G                         # 1000G memory for training
-#SBATCH --time=24:00:00                     # 24 hours for training
+#SBATCH --time=48:00:00                     # 48 hours for training
 #SBATCH --output=logs/training/whisper_gpu_train_%j.out
 #SBATCH --error=logs/training/whisper_gpu_train_%j.err
 
@@ -55,14 +55,15 @@ export TRANSFORMERS_CACHE="/sc/home/hanno.mueller/.huggingface/transformers"
 # ==============================
 
 echo "Starting Whisper GPU training..."
-echo "Command: python scripts/finetune_whisper_gpu.py -i LangAgeDataSet_preprocessed -o ./whisper_model_output --num_gpus 4 --num_cpus 10 --model_size large"
+echo "Command: python scripts/finetune_whisper_gpu.py -i data/LangAgeLogMelSpec -o ./FrisperWhisper -v v2 --num_gpus 4 --num_cpus 100 --model_size large"
 echo "========================================="
 
 python scripts/finetune_whisper_gpu.py \
-    -i LangAgeDataSet_preprocessed \
-    -o ./whisper_model_output \
+    -i data/LangAgeLogMelSpec \
+    -o ./FrisperWhisper \
+    -v v2 \
     --num_gpus 4 \
-    --num_cpus 10 \
+    --num_cpus 100 \
     --model_size large \
     --dataloader_workers 8
 

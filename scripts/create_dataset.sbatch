@@ -8,9 +8,9 @@
 #SBATCH --account=aisc                      # AISC account for resource access
 #SBATCH --partition=aisc                    # AISC partition
 #SBATCH --nodes=1                           # Single node job
-#SBATCH --cpus-per-task=150                 # 150 CPU cores
-#SBATCH --mem=1000G                         # 1TB memory
-#SBATCH --time=24:00:00                     # 24 hours
+#SBATCH --cpus-per-task=120                 # 120 CPU cores
+#SBATCH --mem=1024G                         # 1TB memory
+#SBATCH --time=48:00:00                     # 48 hours
 #SBATCH --constraint=ARCH:X86               # X86 architecture constraint
 #SBATCH --output=logs/dataset_creation/mk_dataset_%j.out
 #SBATCH --error=logs/dataset_creation/mk_dataset_%j.err
@@ -51,13 +51,13 @@ export MKL_NUM_THREADS=1
 # ==============================
 
 echo "Starting dataset creation..."
-echo "Command: python scripts/Textgrids2DatasetBatch.py -f data/LangAge16kHz -o data/LangAgeDataSetDict -n 150 --batch_size 500 --audio_batch_processes 8"
+echo "Command: python scripts/Textgrids2DatasetBatch.py -f data/LangAge16kHz -o data/LangAgeDataSet -n 120 --batch_size 500 --audio_batch_processes 8"
 echo "=============================================="
 
 python scripts/Textgrids2DatasetBatch.py \
     -f data/LangAge16kHz \
-    -o data/LangAgeDataSetDict \
-    -n 150 \
+    -o data/LangAgeDataSet \
+    -n 120 \
     --batch_size 500 \
     --audio_batch_processes 8
 
@@ -66,4 +66,4 @@ echo "Dataset creation completed at $(date)"
 
 # Show output directory structure
 echo "Output directory contents:"
-ls -la data/LangAgeDataSetDict/
+ls -la data/LangAgeDataSet/
