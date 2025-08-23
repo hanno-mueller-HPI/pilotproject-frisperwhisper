@@ -40,6 +40,18 @@ def parse_arguments():
         help="Output file to save transcription (optional, prints to stdout if not specified)"
     )
     parser.add_argument(
+        "--output",
+        type=str,
+        default="transcripts",
+        help="Base output directory for transcriptions (default: transcripts)"
+    )
+    parser.add_argument(
+        "--version",
+        type=str,
+        default=None,
+        help="Model version name for subfolder organization"
+    )
+    parser.add_argument(
         "--language",
         type=str,
         default="french",
@@ -147,11 +159,31 @@ def main():
     print(transcription)
     print("=" * 42)
     
-    # Save to file if specified
+    # Determine output file path
+    output_file_path = None
+    
     if args.output_file:
-        with open(args.output_file, 'w', encoding='utf-8') as f:
+        # Use specific output file if provided
+        output_file_path = args.output_file
+    elif args.version:
+        # Create organized folder structure: transcripts/version/filename.txt
+        audio_filename = os.path.splitext(os.path.basename(args.input_audio))[0]
+        version_dir = os.path.join(args.output, args.version)
+        os.makedirs(version_dir, exist_ok=True)
+        output_file_path = os.path.join(version_dir, f"{audio_filename}_transcription.txt")
+    
+    # Save to file if output path is determined
+    if output_file_path:
+        with open(output_file_path, 'w', encoding='utf-8') as f:
+            f.write(f"Audio file: {args.input_audio}\n")
+            f.write(f"Model: {args.model_path}\n")
+            f.write(f"Language: {args.language}\n")
+            f.write(f"Timestamp: {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write("-" * 50 + "\n")
             f.write(transcription)
-        print(f"Transcription saved to: {args.output_file}")
+        print(f"Transcription saved to: {output_file_path}")
+    else:
+        print("No output file specified. Transcription displayed above only.")
     
     print("Transcription completed successfully!")
 

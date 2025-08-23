@@ -25,9 +25,32 @@ from transformers import (
 from datasets import DatasetDict, load_from_disk
 import evaluate
 
-# Enable proper multi-GPU support
+# Enable proper multi-GPU support and memory optimizations
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True,max_split_size_mb:128"
 
+### Memory Management Functions ##############################################
+
+def cleanup_memory():
+    """Aggressive memory cleanup"""
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+
+def setup_cuda_environment():
+    """Setup optimal CUDA environment for training"""
+    if torch.cuda.is_available():
+        print("Setting up CUDA environment...")
+        
+        # Set memory fraction to be more conservative
+        for i in range(torch.cuda.device_count()):
+            torch.cuda.set_per_process_memory_fraction(0.85, device=i)  # Use 85% of GPU memory
+        
+        # Initial cleanup
+        cleanup_memory()
+        
+        print("CUDA environment setup complete.")
 
 ### Class Definitions ########################################################
 
@@ -177,6 +200,12 @@ def parse_arguments():
         type=int,
         default=25,
         help="Log every N steps (default: 25)"
+    )
+    parser.add_argument(
+        "--max_eval_samples",
+        type=int,
+        default=None,
+        help="Maximum number of evaluation samples to use (default: None, use all)"
     )
     
     return parser.parse_args()
@@ -351,6 +380,9 @@ if __name__ == "__main__":
     # Parse command line arguments first
     args = parse_arguments()
     
+    # Setup CUDA environment first
+    setup_cuda_environment()
+    
     # Create full output path with version subfolder
     full_output_dir = os.path.join(args.output_dir, args.version)
     print(f"Model will be saved to: {full_output_dir}")
@@ -422,6 +454,11 @@ if __name__ == "__main__":
     print(f"Train samples: {len(train_dataset)}")
     print(f"Eval samples: {len(eval_dataset)}")
     
+    # Limit evaluation samples if specified
+    if args.max_eval_samples is not None and len(eval_dataset) > args.max_eval_samples:
+        eval_dataset = eval_dataset.select(range(args.max_eval_samples))
+        print(f"Limited eval samples to: {len(eval_dataset)}")
+    
     # Initialize Whisper components
     model_name = f"openai/whisper-{args.model_size}"
     print(f"Loading Whisper model: {model_name}")
@@ -432,6 +469,18 @@ if __name__ == "__main__":
     
     # Load model
     model = WhisperForConditionalGeneration.from_pretrained(model_name)
+    
+    # Move model to GPU before any operations if available
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        model = model.to(device)
+        print(f"Model moved to device: {device}")
+        
+        # For multi-GPU setups, ensure model is ready for parallel training
+        if num_gpus > 1:
+            print(f"Preparing model for multi-GPU training ({num_gpus} GPUs)")
+            # The Trainer will handle the actual parallelization
+            # No manual DataParallel wrapping needed
     
     # Configure model for French transcription
     model.generation_config.language = "french"
@@ -506,15 +555,15 @@ if __name__ == "__main__":
     print(f"Evaluation batch size per device: {per_device_eval_batch_size}")
     print(f"Dataloader workers: {dataloader_workers}")
     
-    # Define training arguments
+    # Define training arguments with proper multi-GPU support
     training_args = Seq2SeqTrainingArguments(
         output_dir=full_output_dir,
         per_device_train_batch_size=per_device_train_batch_size,
-        gradient_accumulation_steps=4 if is_distributed else args.gradient_accumulation_steps,  # Moderate accumulation for distributed
+        gradient_accumulation_steps=4 if is_distributed else args.gradient_accumulation_steps,
         learning_rate=args.learning_rate,
         warmup_steps=args.warmup_steps,
         max_steps=args.max_steps,
-        gradient_checkpointing=False,  # Disable gradient checkpointing to avoid graph issues in distributed training
+        gradient_checkpointing=False,  # Disable to avoid memory issues
         fp16=True,
         eval_strategy="steps",
         per_device_eval_batch_size=per_device_eval_batch_size,
@@ -525,23 +574,26 @@ if __name__ == "__main__":
         logging_steps=args.logging_steps,
         report_to=["tensorboard"] if not is_distributed or int(os.environ.get("RANK", 0)) == 0 else [],
         load_best_model_at_end=True,
-        metric_for_best_model="eval_loss",  # Use loss instead of WER since WER might not be available
+        metric_for_best_model="eval_loss",
         greater_is_better=False,
         push_to_hub=False,
-        dataloader_num_workers=2 if is_distributed else min(dataloader_workers, 4),  # Reduce workers for distributed
-        ddp_find_unused_parameters=False,
-        dataloader_pin_memory=False if is_distributed else True,  # Disable pin memory for distributed to save memory
+        # Multi-GPU optimizations (works for both distributed and non-distributed)
+        dataloader_num_workers=2 if (is_distributed or num_gpus > 1) else min(dataloader_workers, 4),
+        dataloader_pin_memory=True if num_gpus == 1 else False,  # Disable pin memory for multi-GPU
         remove_unused_columns=False,  # Keep all columns to avoid issues with custom data collator
-        # Distributed training settings
+        # Distributed training settings (only for distributed mode)
         ddp_backend="nccl" if is_distributed else None,
+        ddp_find_unused_parameters=False,
         group_by_length=False,  # Disable to avoid issues with variable-length sequences
         save_on_each_node=False,  # Only save on main node
         logging_first_step=True,
-        # Memory optimizations for distributed training
+        # Memory and performance optimizations
         max_grad_norm=1.0,  # Gradient clipping
-        optim="adamw_torch", #if is_distributed else "adamw_hf",  # Use torch optimizer for better memory management
-        ddp_bucket_cap_mb=25 if is_distributed else None,  # Reduce DDP bucket size for memory efficiency
+        optim="adamw_torch",  # Use torch optimizer for better memory management
+        ddp_bucket_cap_mb=25 if is_distributed else None,
         dataloader_drop_last=True,  # Drop last incomplete batch for consistent training
+        # Multi-GPU specific settings
+        local_rank=-1 if not is_distributed else int(os.environ.get("LOCAL_RANK", -1)),
     )
     
     # Initialize trainer
@@ -556,11 +608,28 @@ if __name__ == "__main__":
         processing_class=processor.feature_extractor,  # Use processing_class instead of tokenizer
     )
     
+    # Handle multi-GPU scenario - use proper multi-GPU training
+    if num_gpus > 1 and not is_distributed:
+        print(f"🎮 Multi-GPU setup detected ({num_gpus} GPUs)")
+        print(f"� Using Transformers' native multi-GPU support (no DataParallel)")
+        print(f"💡 Transformers will automatically distribute the model across GPUs")
+        
+        # Let Transformers handle multi-GPU internally without manual DataParallel wrapping
+        # This uses the trainer's built-in parallelization which is more stable
+        print(f"✅ Multi-GPU training enabled - GPUs will be used automatically")
+    elif num_gpus == 1:
+        print(f"✅ Single GPU training mode")
+    else:
+        print(f"🚀 Distributed training mode detected")
+    
     print("Starting training...")
     print(f"Model will be saved to: {full_output_dir}")
     print(f"Training on {len(train_dataset)} samples")
     print(f"Evaluating on {len(eval_dataset)} samples")
     print("-" * 50)
+    
+    # Memory cleanup before training
+    cleanup_memory()
     
     # Start training
     trainer.train()
@@ -571,5 +640,8 @@ if __name__ == "__main__":
     # Save final model
     trainer.save_model()
     processor.save_pretrained(full_output_dir)
+    
+    # Final cleanup
+    cleanup_memory()
     
     print("GPU fine-tuning completed successfully!")

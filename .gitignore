@@ -21,9 +21,14 @@ parquet*
 slides*
 LangAgeDataSet*
 Dataset2LogMelSpec*
+transcripts*
+FrisperWhisper*
 
 # Logs
 logs/
 *.log
 *.out
 *.err
+
+# testin
+develop*

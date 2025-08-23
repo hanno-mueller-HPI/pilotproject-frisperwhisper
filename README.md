@@ -137,7 +137,7 @@ Folgende Optionen stehen zur Verfügung:
 Whisper mit mehreren GPUs fine-tunen.
 
 ```bash
-(.venv)$ ./scripts/run_distributed_training.sh
+(.venv)$ python scripts/finetune_whisper_gpu.py -i data/LangAgeLogMelSpec -o ./FrisperWhisper -v v1 --num_gpus 2 --num_cpus 30 --model_size large --dataloader_workers 8 --per_device_train_batch_size 1 --per_device_eval_batch_size 1 --gradient_accumulation_steps 16
 ```
 
 ## SLURM
@@ -156,22 +156,20 @@ Für die Verarbeitung auf dem Cluster stehen verschiedene SLURM-Skripte zur Verf
 
 ### Whisper Training
 
-Die Whisper-Modelle werden mit einer Versionsangabe gespeichert. Bei Verwendung von `-o FrisperWhisper -v v2` wird das Modell in `./FrisperWhisper/v2/` gespeichert.
+Die Whisper-Modelle werden mit einer Versionsangabe gespeichert. Bei Verwendung von `-o FrisperWhisper -v v1` wird das Modell in `./FrisperWhisper/v1/` gespeichert.
 
-#### Single-Node Training (4 GPUs)
+#### GPU Training (Anpassbar)
 ```bash
 (.venv)$ sbatch ./scripts/train_whisper_gpu.sbatch
 ```
 
-#### Multi-Node Training (12 GPUs auf 4 Nodes)
-```bash
-(.venv)$ sbatch ./scripts/train_whisper_gpu_multinode.sbatch
-```
+**Hinweis:** Das Skript `train_whisper_gpu.sbatch` kann angepasst werden für verschiedene Hardware-Konfigurationen (GPUs, CPUs, Speicher, Laufzeit). Für automatische Konfiguration siehe Wrapper-Skript (TODO).
 
 ### TODOs
+- [ ] Wrapper-Skript für automatische train_whisper_gpu.sbatch Konfiguration (GPUs, CPUs, Speicher, Laufzeit, Outputfolder, Version)
+- [ ] Transcription-Skript für Inferenz mit fine-tuned Modellen (`transcribe_with_finetuned.py`)
 - [ ] Integriertes Training-Skript für End-to-End Pipeline
 - [ ] Automatisierte Evaluation nach dem Training
-- [ ] Multi-Node Training für sehr große Datasets
 - [ ] Checkpoint-Recovery für unterbrochene Jobs
 
 
