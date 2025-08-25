@@ -19,11 +19,11 @@
 #SBATCH --account=aisc                      # AISC account for H100 access
 #SBATCH --partition=aisc                    # Partition with H100 GPUs
 #SBATCH --nodes=1                           # Single node job
-#SBATCH --ntasks-per-node=8                 # Eight tasks for 8 GPUs
-#SBATCH --gpus-per-node=h100:8              # 8 H100 GPUs 
+#SBATCH --ntasks-per-node=6                 # Eight tasks for 8 GPUs
+#SBATCH --gpus-per-node=h100:6              # 8 H100 GPUs 
 #SBATCH --cpus-per-task=15                  # 15 CPU cores per task (120 total)
 #SBATCH --mem=1500G                          # 800G memory for training
-#SBATCH --time=72:00:00                     # 48 hours for training
+#SBATCH --time=96:00:00                     # 48 hours for training
 #SBATCH --output=logs/training/whisper_gpu_train_%j.out
 #SBATCH --error=logs/training/whisper_gpu_train_%j.err
 
@@ -44,7 +44,7 @@ echo "Memory: ${SLURM_MEM_PER_NODE}MB"
 echo "========================================="
 
 # Set CUDA environment and memory optimization
-export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:128
 
 # Navigate to project directory
@@ -70,7 +70,7 @@ export HF_HUB_OFFLINE=1
 # Set distributed training environment variables with unique port per job
 export MASTER_ADDR=localhost
 export MASTER_PORT=$((29500 + ${SLURM_JOB_ID} % 1000))
-export WORLD_SIZE=8
+export WORLD_SIZE=6
 export NCCL_DEBUG=WARN
 export NCCL_IB_DISABLE=1
 export NCCL_P2P_DISABLE=1
@@ -84,16 +84,16 @@ echo "Using port: ${MASTER_PORT} for job ${SLURM_JOB_ID}"
 echo "Starting Whisper GPU training with 8 GPUs using torchrun..."
 echo "Configuration:"
 echo "  - Method: torchrun distributed training"
-echo "  - GPUs: 8 H100"
-echo "  - Process per node: 8"
+echo "  - GPUs: 6 H100"
+echo "  - Process per node: 6"
 echo "  - Batch size per device: 1"
 echo "  - Gradient accumulation: 16"
 echo "  - Total effective batch size: 128"
-echo "Command: srun torchrun --nproc_per_node=8 scripts/finetune_whisper_gpu.py -i data/LangAgeLogMelSpec -o ./FrisperWhisper -v gpu_23_72h_extensive --num_gpus 8 --num_cpus 120 --model_size large --per_device_train_batch_size 1 --per_device_eval_batch_size 1 --gradient_accumulation_steps 16"
+echo "Command: srun torchrun --nproc_per_node=6 scripts/finetune_whisper_gpu.py -i data/LangAgeLogMelSpec -o ./FrisperWhisper -v gpu_23_96h_6gpu --num_gpus 6 --num_cpus 120 --model_size large --per_device_train_batch_size 1 --per_device_eval_batch_size 1 --gradient_accumulation_steps 16"
 echo "========================================="
 
 srun torchrun \
-    --nproc_per_node=4 \
+    --nproc_per_node=6 \
     --nnodes=1 \
     --node_rank=0 \
     --master_addr=localhost \
@@ -102,7 +102,7 @@ srun torchrun \
     -i data/LangAgeLogMelSpec \
     -o ./FrisperWhisper \
     -v gpu_23_72h_extensive \
-    --num_gpus 4 \
+    --num_gpus 6 \
     --num_cpus 60 \
     --model_size large \
     --dataloader_workers 8 \
