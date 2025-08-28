@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 #############################################################################
-# Script Name: finetune_whisper_HF.py                                      #
-# Description: Fine-tune Whisper based on HuggingFace tutorial             #
+# Script Name: finetune_whisper_HF_gpu_stable.py                           #
+# Description: Fine-tune Whisper with improved stability measures          #
 # Author: Hanno Müller                                                      #
-# Date: 2025-08-25                                                          #
-# Based on: https://huggingface.co/blog/fine-tune-whisper                  #
+# Date: 2025-08-26                                                          #
+# Based on: finetune_whisper_HF_gpu.py with stability improvements         #
 #############################################################################
 
 import os
@@ -33,7 +33,7 @@ from transformers import (
 def parse_arguments():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="Fine-tune Whisper model using HuggingFace transformers."
+        description="Fine-tune Whisper model with improved stability measures."
     )
     
     parser.add_argument(
@@ -46,9 +46,9 @@ def parse_arguments():
     parser.add_argument(
         "--model_size",
         type=str,
-        default="small",
+        default="medium",
         choices=["tiny", "base", "small", "medium", "large", "large-v2", "large-v3"],
-        help="Whisper model size (default: small)"
+        help="Whisper model size (default: medium)"
     )
     
     parser.add_argument(
@@ -58,54 +58,115 @@ def parse_arguments():
         help="Output directory for the fine-tuned model (default: ./FrisperWhisper/test-gpu)"
     )
     
-    # Training hyperparameters
+    # Core training hyperparameters (improved defaults)
     parser.add_argument(
         "--per_device_train_batch_size",
         type=int,
-        default=4,  # Reduced for large-v3 memory requirements
+        default=4,  # Reduced for stability
         help="Batch size per device during training (default: 4)"
     )
     
     parser.add_argument(
         "--gradient_accumulation_steps",
         type=int,
-        default=4,  # Increased to maintain effective batch size with smaller per_device_batch_size
+        default=4,  # Increased for better effective batch size
         help="Number of updates steps to accumulate before performing a backward/update pass (default: 4)"
     )
     
     parser.add_argument(
         "--learning_rate",
         type=float,
-        default=1e-5,
-        help="Learning rate (default: 1e-5)"
+        default=3e-6,  # Even more conservative for stability
+        help="Learning rate (default: 3e-6)"
     )
     
     parser.add_argument(
         "--warmup_steps",
         type=int,
-        default=500,
-        help="Number of warmup steps (default: 500)"
+        default=1500,  # Extended warmup for stability
+        help="Number of warmup steps (default: 1500)"
     )
     
     parser.add_argument(
         "--max_steps",
         type=int,
-        default=5000,
-        help="Maximum number of training steps (default: 5000)"
+        default=40000,  # More training for better convergence
+        help="Maximum number of training steps (default: 12000)"
     )
     
     parser.add_argument(
         "--save_steps",
         type=int,
-        default=1000,
-        help="Save checkpoint every X steps (default: 1000)"
+        default=1000,  # More frequent saves
+        help="Save checkpoint every X steps (default: 500)"
     )
     
     parser.add_argument(
         "--eval_steps",
         type=int,
-        default=1000,
-        help="Evaluate every X steps (default: 1000)"
+        default=1000,  # More frequent evaluation
+        help="Evaluate every X steps (default: 500)"
+    )
+    
+    # Stability measures
+    parser.add_argument(
+        "--max_grad_norm",
+        type=float,
+        default=0.5,  # More aggressive clipping for stability
+        help="Maximum gradient norm for clipping (default: 0.5, set to 0 to disable)"
+    )
+    
+    parser.add_argument(
+        "--weight_decay",
+        type=float,
+        default=0.02,  # Slightly higher regularization
+        help="Weight decay (L2 regularization) coefficient (default: 0.02)"
+    )
+    
+    parser.add_argument(
+        "--lr_scheduler_type",
+        type=str,
+        default="cosine",
+        choices=["linear", "cosine", "cosine_with_restarts", "polynomial", "constant", "constant_with_warmup"],
+        help="Learning rate scheduler type (default: cosine)"
+    )
+    
+
+    
+    parser.add_argument(
+        "--early_stopping_patience",
+        type=int,
+        default=0,
+        help="Early stopping patience (steps). Set to 0 to disable early stopping (default: 0)"
+    )
+    
+    parser.add_argument(
+        "--early_stopping_threshold",
+        type=float,
+        default=0.01,
+        help="Early stopping threshold for metric improvement (default: 0.01)"
+    )
+    
+    # Advanced training options
+    parser.add_argument(
+        "--dataloader_num_workers",
+        type=int,
+        default=8,
+        help="Number of data loader workers (default: 8)"
+    )
+    
+    parser.add_argument(
+        "--fp16",
+        action="store_true",
+        default=False,  # Disable by default since BF16 is preferred
+        help="Use 16-bit floating point precision (default: False, use BF16 instead)"
+    )
+    
+    parser.add_argument(
+        "--bf16",
+        action="store_true",
+        default=True,  # Enable by default for H100
+        help="Use bfloat16 precision (recommended for H100, default: True)"
     )
     
     parser.add_argument(
@@ -113,6 +174,31 @@ def parse_arguments():
         type=int,
         default=0,
         help="Number of GPUs to use (default: 0 for CPU-only training)"
+    )
+    
+    # Logging and monitoring
+    parser.add_argument(
+        "--logging_steps",
+        type=int,
+        default=50,
+        help="Log training metrics every X steps (default: 50)"
+    )
+    
+    parser.add_argument(
+        "--report_to",
+        type=str,
+        nargs="+",
+        default=["tensorboard"],
+        choices=["tensorboard", "wandb", "none"],
+        help="Logging platforms (default: tensorboard)"
+    )
+    
+    # Checkpoint resumption
+    parser.add_argument(
+        "--resume_from_checkpoint",
+        type=str,
+        default=None,
+        help="Path to a checkpoint to resume training from. Can be a specific checkpoint directory or 'True' to auto-resume from the latest checkpoint in output_dir (default: None)"
     )
     
     return parser.parse_args()
@@ -308,37 +394,71 @@ def create_training_arguments(args):
     # Set pin_memory based on GPU availability
     use_pin_memory = args.num_gpus > 0
     
+    # Handle early stopping
+    early_stopping_kwargs = {}
+    if args.early_stopping_patience > 0:
+        early_stopping_kwargs.update({
+            "load_best_model_at_end": True,
+            "metric_for_best_model": "wer",
+            "greater_is_better": False,
+        })
+    
     training_args = Seq2SeqTrainingArguments(
         output_dir=args.output_dir,
-        per_device_train_batch_size=args.per_device_train_batch_size, # increase by 2x for every 2x decrease in batch size
+        per_device_train_batch_size=args.per_device_train_batch_size,
         gradient_accumulation_steps=args.gradient_accumulation_steps,
         learning_rate=args.learning_rate,
         warmup_steps=args.warmup_steps,
         max_steps=args.max_steps,
-        gradient_checkpointing=False,  # Disabled to avoid backward graph issues
-        fp16=True,
-        eval_strategy="steps",  # Updated parameter name
-        per_device_eval_batch_size=2,  # Reduced for memory efficiency with large-v3
+        
+        # Stability measures
+        max_grad_norm=args.max_grad_norm if args.max_grad_norm > 0 else None,
+        weight_decay=args.weight_decay,
+        lr_scheduler_type=args.lr_scheduler_type,
+        
+        # Memory and performance
+        fp16=args.fp16 and not args.bf16,  # Don't use both fp16 and bf16
+        bf16=args.bf16,
+        
+        # Evaluation and logging
+        eval_strategy="steps",
+        per_device_eval_batch_size=2,  # Keep small for memory efficiency
         predict_with_generate=True,
         generation_max_length=225,
         save_steps=args.save_steps,
         eval_steps=args.eval_steps,
-        logging_steps=25,
-        report_to=["tensorboard"],
-        load_best_model_at_end=True,
-        metric_for_best_model="wer",
-        greater_is_better=False,
-        dataloader_pin_memory=use_pin_memory,  # Set based on GPU usage
-        # Multi-GPU optimizations for Whisper large-v3
-        dataloader_num_workers=min(args.num_gpus * 2, 8) if args.num_gpus > 0 else 4,  # Scale workers with GPUs
+        logging_steps=args.logging_steps,
+        report_to=args.report_to,
+        
+        # Data loading
+        dataloader_pin_memory=use_pin_memory,
+        dataloader_num_workers=args.dataloader_num_workers,
         remove_unused_columns=False,  # Keep columns to avoid issues
         group_by_length=False,  # Disable to avoid DataParallel issues
+        
+        # Multi-GPU optimizations
         ddp_find_unused_parameters=False,  # For better performance
+        
+        # Apply early stopping settings
+        **early_stopping_kwargs,
     )
+    
     return training_args
 
-def create_trainer(training_args, model, train_dataset, eval_dataset, data_collator, compute_metrics, processor):
-    """Create Seq2SeqTrainer."""
+def create_trainer(training_args, model, train_dataset, eval_dataset, data_collator, compute_metrics, processor, args):
+    """Create Seq2SeqTrainer with optional early stopping."""
+    from transformers.trainer_callback import EarlyStoppingCallback
+    
+    # Setup callbacks
+    callbacks = []
+    if args.early_stopping_patience > 0:
+        early_stopping_callback = EarlyStoppingCallback(
+            early_stopping_patience=args.early_stopping_patience,
+            early_stopping_threshold=args.early_stopping_threshold
+        )
+        callbacks.append(early_stopping_callback)
+        print(f"Early stopping enabled: patience={args.early_stopping_patience}, threshold={args.early_stopping_threshold}")
+    
     trainer = Seq2SeqTrainer(
         args=training_args,
         model=model,
@@ -347,29 +467,150 @@ def create_trainer(training_args, model, train_dataset, eval_dataset, data_colla
         data_collator=data_collator,
         compute_metrics=compute_metrics,
         processing_class=processor,  # Use processing_class instead of tokenizer
+        callbacks=callbacks,
     )
     return trainer
+
+# ============================================================================
+# Checkpoint Management
+# ============================================================================
+
+def find_latest_checkpoint(output_dir):
+    """Find the latest checkpoint in the output directory."""
+    import glob
+    import re
+    
+    if not os.path.exists(output_dir):
+        return None
+    
+    # Look for checkpoint directories
+    checkpoint_pattern = os.path.join(output_dir, "checkpoint-*")
+    checkpoints = glob.glob(checkpoint_pattern)
+    
+    if not checkpoints:
+        return None
+    
+    # Extract step numbers and find the latest
+    checkpoint_steps = []
+    for checkpoint in checkpoints:
+        match = re.search(r"checkpoint-(\d+)", checkpoint)
+        if match:
+            step = int(match.group(1))
+            checkpoint_steps.append((step, checkpoint))
+    
+    if not checkpoint_steps:
+        return None
+    
+    # Return the checkpoint with the highest step number
+    latest_checkpoint = max(checkpoint_steps, key=lambda x: x[0])[1]
+    return latest_checkpoint
+
+def resolve_checkpoint_path(resume_from_checkpoint, output_dir):
+    """Resolve the checkpoint path for resumption."""
+    if resume_from_checkpoint is None:
+        return None
+    
+    # Handle different cases
+    if resume_from_checkpoint.lower() == "true":
+        # Auto-detect latest checkpoint in output_dir
+        checkpoint_path = find_latest_checkpoint(output_dir)
+        if checkpoint_path:
+            print(f"Auto-detected latest checkpoint: {checkpoint_path}")
+        else:
+            print(f"No checkpoints found in {output_dir}, starting fresh training")
+        return checkpoint_path
+    
+    elif os.path.isabs(resume_from_checkpoint):
+        # Absolute path provided
+        if os.path.exists(resume_from_checkpoint):
+            print(f"Resuming from checkpoint: {resume_from_checkpoint}")
+            return resume_from_checkpoint
+        else:
+            print(f"Warning: Checkpoint path does not exist: {resume_from_checkpoint}")
+            print("Starting fresh training")
+            return None
+    
+    else:
+        # Relative path - assume it's relative to output_dir
+        checkpoint_path = os.path.join(output_dir, resume_from_checkpoint)
+        if os.path.exists(checkpoint_path):
+            print(f"Resuming from checkpoint: {checkpoint_path}")
+            return checkpoint_path
+        else:
+            print(f"Warning: Checkpoint path does not exist: {checkpoint_path}")
+            print("Starting fresh training")
+            return None
 
 # ============================================================================
 # Step 7: Training Function
 # ============================================================================
 
-def train_model(trainer):
-    """Train the model."""
-    print("Starting training...")
-    trainer.train()
+def train_model(trainer, resume_from_checkpoint=None):
+    """Train the model with optional checkpoint resumption."""
+    if resume_from_checkpoint:
+        print(f"Resuming training from checkpoint: {resume_from_checkpoint}")
+    else:
+        print("Starting training from scratch...")
+    
+    trainer.train(resume_from_checkpoint=resume_from_checkpoint)
     print("Training completed!")
+
+# ============================================================================
+# Configuration Summary
+# ============================================================================
+
+def print_training_config(args, resume_checkpoint_path=None):
+    """Print training configuration summary."""
+    print("\n" + "="*60)
+    print("TRAINING CONFIGURATION SUMMARY")
+    print("="*60)
+    print(f"Model size: {args.model_size}")
+    print(f"Dataset: {args.dataset_path}")
+    print(f"Output: {args.output_dir}")
+    if resume_checkpoint_path:
+        print(f"Resume from: {resume_checkpoint_path}")
+    elif args.resume_from_checkpoint:
+        print(f"Resume setting: {args.resume_from_checkpoint}")
+    print("-"*60)
+    print("Core Training Parameters:")
+    print(f"  Learning rate: {args.learning_rate}")
+    print(f"  Batch size per device: {args.per_device_train_batch_size}")
+    print(f"  Gradient accumulation: {args.gradient_accumulation_steps}")
+    print(f"  Effective batch size: {args.per_device_train_batch_size * args.gradient_accumulation_steps * max(1, args.num_gpus)}")
+    print(f"  Max steps: {args.max_steps}")
+    print(f"  Warmup steps: {args.warmup_steps}")
+    print(f"  LR scheduler: {args.lr_scheduler_type}")
+    print("-"*60)
+    print("Stability Measures:")
+    print(f"  Gradient clipping: {args.max_grad_norm if args.max_grad_norm > 0 else 'Disabled'}")
+    print(f"  Weight decay: {args.weight_decay}")
+    print(f"  Early stopping: {'Enabled' if args.early_stopping_patience > 0 else 'Disabled'}")
+    if args.early_stopping_patience > 0:
+        print(f"    Patience: {args.early_stopping_patience} steps")
+        print(f"    Threshold: {args.early_stopping_threshold}")
+    print("-"*60)
+    print("Hardware:")
+    print(f"  GPUs: {args.num_gpus}")
+    print(f"  Precision: {'BF16' if args.bf16 else 'FP16' if args.fp16 else 'FP32'}")
+    print(f"  Data workers: {args.dataloader_num_workers}")
+    print("="*60)
 
 # ============================================================================
 # Main Function
 # ============================================================================
 
 def main():
-    """Main training pipeline following HF tutorial."""
-    print("=== Fine-tuning Whisper following HF Tutorial ===")
+    """Main training pipeline with stability improvements."""
+    print("=== Fine-tuning Whisper with Stability Measures ===")
     
     # Parse command line arguments
     args = parse_arguments()
+    
+    # Resolve checkpoint path for resumption
+    resume_checkpoint_path = resolve_checkpoint_path(args.resume_from_checkpoint, args.output_dir)
+    
+    # Print configuration summary
+    print_training_config(args, resume_checkpoint_path)
     
     # Setup GPU environment
     if args.num_gpus > 0:
@@ -438,13 +679,16 @@ def main():
         eval_dataset=dataset["test"],
         data_collator=data_collator,
         compute_metrics=compute_metrics,
-        processor=processor,  # Pass processor instead of feature_extractor
+        processor=processor,
+        args=args,
     )
     
     # Step 9: Train
-    train_model(trainer)
+    train_model(trainer, resume_checkpoint_path)
     
     print("=== Training completed successfully! ===")
+    print(f"Model saved to: {args.output_dir}")
+    print(f"TensorBoard logs: {args.output_dir}/runs/")
 
 if __name__ == "__main__":
     main()

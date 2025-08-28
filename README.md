@@ -134,11 +134,62 @@ Folgende Optionen stehen zur Verfügung:
 
 ## Fine-tuning von Whisper
 
-Whisper mit mehreren GPUs fine-tunen.
+Das `finetune_whisper.py` Skript bietet umfassende Funktionen für das Training von Whisper-Modellen mit GPU-Optimierung und Checkpoint-Unterstützung.
+
+### Grundlegendes Training
 
 ```bash
-(.venv)$ python scripts/finetune_whisper_gpu.py -i data/LangAgeLogMelSpec -o ./FrisperWhisper -v v1 --num_gpus 2 --num_cpus 30 --model_size large --dataloader_workers 8 --per_device_train_batch_size 1 --per_device_eval_batch_size 1 --gradient_accumulation_steps 16
+(.venv)$ python scripts/finetune_whisper.py \
+    --input_dataset data/LangAgeDataSet \
+    --output_dir FrisperWhisper \
+    --version v1 \
+    --model_size medium \
+    --num_gpus 4 \
+    --num_cpus 16 \
+    --per_device_train_batch_size 1 \
+    --per_device_eval_batch_size 1 \
+    --gradient_accumulation_steps 16
 ```
+
+### Training von Checkpoints fortsetzen
+
+Das Skript unterstützt das Fortsetzen unterbrochener Trainings von gespeicherten Checkpoints:
+
+#### Automatisches Fortsetzen vom letzten Checkpoint
+
+```bash
+(.venv)$ python scripts/finetune_whisper.py \
+    --input_dataset data/LangAgeDataSet \
+    --output_dir FrisperWhisper \
+    --version v1 \
+    --resume_from_checkpoint true
+```
+
+#### Fortsetzen von einem spezifischen Checkpoint
+
+```bash
+(.venv)$ python scripts/finetune_whisper.py \
+    --input_dataset data/LangAgeLogMelSpec \
+    --output_dir FrisperWhisper \
+    --version v1 \
+    --resume_from_checkpoint checkpoint-1000
+```
+
+#### Fortsetzen von absolutem Pfad
+
+```bash
+(.venv)$ python scripts/finetune_whisper.py \
+    --input_dataset data/LangAgeLogMelSpec \
+    --output_dir FrisperWhisper \
+    --version v1 \
+    --resume_from_checkpoint /full/path/to/checkpoint-1000
+```
+
+**Checkpoint-Verhalten:**
+- Checkpoints werden automatisch alle `--save_steps` (Standard: 1000) Schritte gespeichert
+- Jeder Checkpoint enthält Modellgewichte, Optimizer-Status, Scheduler-Status und Trainingsfortschritt
+- Das Training wird exakt an der Stelle fortgesetzt, an der es unterbrochen wurde
+- Falls der angegebene Checkpoint nicht existiert, startet das Training von vorne mit einer Warnung
 
 ## SLURM
 
@@ -156,21 +207,53 @@ Für die Verarbeitung auf dem Cluster stehen verschiedene SLURM-Skripte zur Verf
 
 ### Whisper Training
 
-Die Whisper-Modelle werden mit einer Versionsangabe gespeichert. Bei Verwendung von `-o FrisperWhisper -v v1` wird das Modell in `./FrisperWhisper/v1/` gespeichert.
+Das `train_whisper.sbatch` Skript führt das Whisper-Training auf dem Cluster durch. Die Whisper-Modelle werden mit einer Versionsangabe gespeichert. Bei Verwendung von `-o FrisperWhisper -v v1` wird das Modell in `./FrisperWhisper/v1/` gespeichert.
 
-#### GPU Training (Anpassbar)
+#### Standard-Training
 ```bash
-(.venv)$ sbatch ./scripts/train_whisper_gpu.sbatch
+(.venv)$ sbatch ./scripts/train_whisper.sbatch
 ```
 
-**Hinweis:** Das Skript `train_whisper_gpu.sbatch` kann angepasst werden für verschiedene Hardware-Konfigurationen (GPUs, CPUs, Speicher, Laufzeit). Für automatische Konfiguration siehe Wrapper-Skript (TODO).
+#### Angepasstes Training mit Umgebungsvariablen
+```bash
+(.venv)$ DATASET_PATH=data/LangAgeLogMelSpec \
+         OUTPUT_DIR=FrisperWhisper \
+         VERSION=v2 \
+         MODEL_SIZE=medium \
+         NUM_GPUS=2 \
+         MAX_STEPS=10000 \
+         sbatch ./scripts/train_whisper.sbatch
+```
+
+#### Training von Checkpoint fortsetzen
+```bash
+# Setze RESUME_CHECKPOINT Umgebungsvariable
+(.venv)$ RESUME_CHECKPOINT=checkpoint-1000 sbatch ./scripts/train_whisper.sbatch
+
+# Oder automatisch vom letzten Checkpoint
+(.venv)$ RESUME_CHECKPOINT=true sbatch ./scripts/train_whisper.sbatch
+```
+
+**Anpassbare Parameter über Umgebungsvariablen:**
+- `DATASET_PATH`: Pfad zum Dataset (Standard: `data/LangAgeLogMelSpec`)
+- `OUTPUT_DIR`: Ausgabeordner (Standard: `FrisperWhisper`)
+- `VERSION`: Versionsbezeichnung (Standard: `v1`)
+- `MODEL_SIZE`: Modellgröße (Standard: `large`)
+- `NUM_GPUS`: Anzahl GPUs (Standard: `4`)
+- `NUM_CPUS`: Anzahl CPUs (Standard: `16`)
+- `TRAIN_BATCH_SIZE`: Training Batch-Größe (Standard: `1`)
+- `EVAL_BATCH_SIZE`: Evaluation Batch-Größe (Standard: `1`)
+- `GRADIENT_ACCUMULATION`: Gradient Accumulation Steps (Standard: `16`)
+- `LEARNING_RATE`: Lernrate (Standard: `1e-5`)
+- `MAX_STEPS`: Maximale Trainingsschritte (Standard: `5000`)
+- `RESUME_CHECKPOINT`: Checkpoint zum Fortsetzen (leer = von vorne, `true` = letzter, `checkpoint-XXXX` = spezifisch)
+
+**Hinweis:** Das Skript nutzt automatisch das neue `finetune_whisper.py` Skript mit allen verfügbaren Optimierungen.
 
 ### TODOs
-- [ ] Wrapper-Skript für automatische train_whisper_gpu.sbatch Konfiguration (GPUs, CPUs, Speicher, Laufzeit, Outputfolder, Version)
 - [ ] Transcription-Skript für Inferenz mit fine-tuned Modellen (`transcribe_with_finetuned.py`)
 - [ ] Integriertes Training-Skript für End-to-End Pipeline
 - [ ] Automatisierte Evaluation nach dem Training
-- [ ] Checkpoint-Recovery für unterbrochene Jobs
 
 
 
