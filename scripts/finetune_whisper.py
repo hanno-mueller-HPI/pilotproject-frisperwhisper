@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 
 #############################################################################
-# Script Name: finetune_whisper_HF_gpu_stable.py                           #
-# Description: Fine-tune Whisper with improved stability measures          #
+# Script Name: finetune_whisper.py                                         #
+# Description: Fine-tune Whisper with improved WER computation             #
 # Author: Hanno Müller                                                      #
-# Date: 2025-08-26                                                          #
-# Based on: finetune_whisper_HF_gpu.py with stability improvements         #
+# Date: 2025-09-01 (Updated)                                               #
+# Based on: finetune_whisper_HF_gpu_stable.py with text normalization     #
+#                                                                           #
+# Key improvements:                                                         #
+# - Added text normalization for accurate WER computation                  #
+# - Handles differences between original transcripts (lowercase,           #
+#   no punctuation) and Whisper output (capitalized, punctuation)         #
+# - Simple normalization: lowercase + remove final punctuation            #
 #############################################################################
 
 import os
@@ -13,6 +19,7 @@ import torch
 import evaluate
 import argparse
 import numpy as np
+import string
 from dataclasses import dataclass
 from typing import Any, Dict, List, Union
 
@@ -22,9 +29,9 @@ from transformers import (
     WhisperTokenizer,
     WhisperProcessor,
     WhisperForConditionalGeneration,
-    Seq2SeqTrainingArguments,
-    Seq2SeqTrainer
 )
+from transformers.training_args_seq2seq import Seq2SeqTrainingArguments
+from transformers.trainer_seq2seq import Seq2SeqTrainer
 
 # ============================================================================
 # Argument Parsing
@@ -83,29 +90,29 @@ def parse_arguments():
     parser.add_argument(
         "--warmup_steps",
         type=int,
-        default=1500,  # Extended warmup for stability
-        help="Number of warmup steps (default: 1500)"
+        default=1000,  # Extended warmup for stability
+        help="Number of warmup steps (default: 1000)"
     )
     
     parser.add_argument(
         "--max_steps",
         type=int,
         default=40000,  # More training for better convergence
-        help="Maximum number of training steps (default: 12000)"
+        help="Maximum number of training steps (default: 40000)"
     )
     
     parser.add_argument(
         "--save_steps",
         type=int,
         default=1000,  # More frequent saves
-        help="Save checkpoint every X steps (default: 500)"
+        help="Save checkpoint every X steps (default: 1000)"
     )
     
     parser.add_argument(
         "--eval_steps",
         type=int,
         default=1000,  # More frequent evaluation
-        help="Evaluate every X steps (default: 500)"
+        help="Evaluate every X steps (default: 1000)"
     )
     
     # Stability measures
@@ -204,6 +211,34 @@ def parse_arguments():
     return parser.parse_args()
 
 # ============================================================================
+# Text Normalization for WER Computation
+# ============================================================================
+
+def normalize_text_for_wer(text):
+    """
+    Normalize text for accurate WER computation by handling differences
+    between original transcripts and Whisper output.
+    
+    Simple normalization:
+    - Convert all letters to lowercase
+    - Remove final punctuation
+    - Remove all commas
+    """
+    if not text:
+        return ""
+    
+    # Convert to lowercase
+    text = text.lower()
+    
+    # Remove all commas
+    text = text.replace(',', '')
+    
+    # Remove punctuation at the end of sentences
+    text = text.rstrip(string.punctuation + ' ')
+    
+    return text
+
+# ============================================================================
 # Step 1: Load Dataset
 # ============================================================================
 
@@ -273,9 +308,9 @@ def prepare_dataset_function(batch, feature_extractor, tokenizer):
     
     return batch
 
-def prepare_data(dataset, feature_extractor, tokenizer):
+def prepare_data(dataset, feature_extractor, tokenizer, num_workers=4):
     """Prepare the dataset for training."""
-    print("Preparing data...")
+    print(f"Preparing data with {num_workers} workers...")
     
     # Note: Audio is already at 16kHz sampling rate, so no resampling needed
     
@@ -283,7 +318,7 @@ def prepare_data(dataset, feature_extractor, tokenizer):
     dataset = dataset.map(
         lambda batch: prepare_dataset_function(batch, feature_extractor, tokenizer),
         remove_columns=dataset.column_names["train"], 
-        num_proc=4
+        num_proc=num_workers
     )
     
     return dataset
@@ -367,7 +402,7 @@ def load_metric():
     return metric
 
 def create_compute_metrics_function(tokenizer, metric):
-    """Create compute_metrics function."""
+    """Create compute_metrics function with proper text normalization."""
     def compute_metrics(pred):
         pred_ids = pred.predictions
         label_ids = pred.label_ids
@@ -379,7 +414,13 @@ def create_compute_metrics_function(tokenizer, metric):
         pred_str = tokenizer.batch_decode(pred_ids, skip_special_tokens=True)
         label_str = tokenizer.batch_decode(label_ids, skip_special_tokens=True)
 
-        wer = 100 * metric.compute(predictions=pred_str, references=label_str)
+        # Apply text normalization to both predictions and references
+        # This handles differences between original transcripts (lowercase, no punctuation)
+        # and Whisper output (capitalized, with punctuation)
+        pred_str_normalized = [normalize_text_for_wer(text) for text in pred_str]
+        label_str_normalized = [normalize_text_for_wer(text) for text in label_str]
+
+        wer = 100 * metric.compute(predictions=pred_str_normalized, references=label_str_normalized)
 
         return {"wer": wer}
     
@@ -412,7 +453,7 @@ def create_training_arguments(args):
         max_steps=args.max_steps,
         
         # Stability measures
-        max_grad_norm=args.max_grad_norm if args.max_grad_norm > 0 else None,
+        max_grad_norm=args.max_grad_norm if args.max_grad_norm > 0 else 1.0,  # Use 1.0 as default instead of None
         weight_decay=args.weight_decay,
         lr_scheduler_type=args.lr_scheduler_type,
         
@@ -649,7 +690,7 @@ def main():
     processor = create_processor(model_name)
     
     # Step 3: Prepare data
-    dataset = prepare_data(dataset, feature_extractor, tokenizer)
+    dataset = prepare_data(dataset, feature_extractor, tokenizer, args.dataloader_num_workers)
     
     # Step 4: Load model
     model = load_pretrained_model(model_name)

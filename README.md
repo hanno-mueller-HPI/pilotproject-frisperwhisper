@@ -72,7 +72,9 @@ Das Skript `Textgrid2DatasetBatch.py` nutzt eine Multiprocessing-Architektur mit
 - Filterung stiller Audio-Segmente (nur Nullen)
 - Entfernung leerer Transkripte
 - Filterung spezifischer Sprecher (z.B. "spk1")
-- Entfernung von "(buzz) anon (buzz)" Mustern
+- Entfernung von "(buzz)" Mustern (anonymisierte Passagen)
+- Entfernung von Segmenten mit unverständlichen Äußerungen anhand der [] Muster
+- Entfernung der Interviews h015a, e025a, d048a, die gesondert evaluiert werden sollen
 
 Folgende Optionen stehen zur Verfügung:
 
@@ -140,7 +142,7 @@ Das `finetune_whisper.py` Skript bietet umfassende Funktionen für das Training 
 
 ```bash
 (.venv)$ python scripts/finetune_whisper.py \
-    --input_dataset data/LangAgeDataSet \
+    --dataset_path data/LangAgeDataSet \
     --output_dir FrisperWhisper \
     --version v1 \
     --model_size medium \

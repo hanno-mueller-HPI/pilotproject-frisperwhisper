@@ -33,6 +33,88 @@ def should_remove_buzz_anon(entry):
     return False
 
 
+def should_remove_buzz_patterns(entry):
+    """
+    Check if an entry contains any (buzz) patterns and should be removed.
+    This includes (buzz), (buzz) text (buzz), etc.
+    
+    Args:
+        entry (dict): Dataset entry with 'sentence' field
+        
+    Returns:
+        bool: True if the entry should be removed, False otherwise
+    """
+    sentence = entry.get('sentence', '').strip()
+    
+    # Check if sentence contains any (buzz) pattern
+    if "(buzz)" in sentence:
+        logger.debug(f"Removing entry with buzz pattern: '{sentence}'")
+        return True
+    
+    return False
+
+
+def should_remove_brackets(entry):
+    """
+    Check if an entry contains any brackets ( ) [ ] < > and should be removed.
+    
+    Args:
+        entry (dict): Dataset entry with 'sentence' field
+        
+    Returns:
+        bool: True if the entry should be removed, False otherwise
+    """
+    sentence = entry.get('sentence', '').strip()
+    
+    # Check if sentence contains any of the specified brackets
+    bracket_chars = ['(', ')', '[', ']', '<', '>']
+    
+    for bracket in bracket_chars:
+        if bracket in sentence:
+            logger.debug(f"Removing entry with bracket '{bracket}': '{sentence}'")
+            return True
+    
+    return False
+
+
+def should_remove_files(entry, files_to_remove=None):
+    """
+    Check if an entry comes from specific files that should be completely excluded.
+    
+    Args:
+        entry (dict): Dataset entry with potential 'path', 'textgrid_path', or 'audio_path' field
+        files_to_remove (list or str): File basename(s) to remove (e.g., ['h015a', 'e025a'])
+        
+    Returns:
+        bool: True if the entry should be removed, False otherwise
+    """
+    if files_to_remove is None:
+        return False
+    
+    # Convert single file to list
+    if isinstance(files_to_remove, str):
+        files_to_remove = [files_to_remove]
+    
+    # Check various possible path field names
+    path_fields = ['path', 'textgrid_path', 'audio_path']
+    
+    for field in path_fields:
+        if field in entry:
+            file_path = str(entry[field]).strip()
+            
+            # Extract basename without extension
+            import os
+            basename = os.path.splitext(os.path.basename(file_path))[0]
+            
+            # Check if current file should be removed
+            for file_to_remove in files_to_remove:
+                if basename.lower() == str(file_to_remove).strip().lower():
+                    logger.debug(f"Removing entry from file: {basename}")
+                    return True
+    
+    return False
+
+
 def should_remove_empty_or_whitespace(entry):
     """
     Check if an entry contains only empty text or whitespace and should be removed.
@@ -171,18 +253,22 @@ def should_remove_speaker(entry, speakers_to_remove=None):
     return False
 
 
-def clean_textgrid_entries(entries, remove_buzz_anon=True, remove_empty=True, remove_short_audio=True, 
-                          remove_silent_audio=True, remove_speakers=None, min_duration=0.1, silence_threshold=1e-6):
+def clean_textgrid_entries(entries, remove_buzz_anon=True, remove_buzz_patterns=True, remove_brackets=True,
+                          remove_empty=True, remove_short_audio=True, remove_silent_audio=True, 
+                          remove_speakers=None, remove_files=None, min_duration=0.1, silence_threshold=1e-6):
     """
     Apply all cleaning filters to a list of TextGrid entries.
     
     Args:
         entries (list): List of dataset entries
         remove_buzz_anon (bool): Whether to remove entries containing "(buzz) anon (buzz)"
+        remove_buzz_patterns (bool): Whether to remove entries containing any "(buzz)" patterns
+        remove_brackets (bool): Whether to remove entries containing brackets ( ) [ ] < >
         remove_empty (bool): Whether to remove empty or whitespace-only entries
         remove_short_audio (bool): Whether to remove very short audio segments
         remove_silent_audio (bool): Whether to remove silent audio (all zeros)
         remove_speakers (list or str): Speaker(s) to remove (e.g., ['speaker1'] or 'speaker1')
+        remove_files (list or str): File basename(s) to remove completely (e.g., ['h015a', 'e025a'])
         min_duration (float): Minimum audio duration in seconds
         silence_threshold (float): Threshold below which audio is considered silent
         
@@ -197,23 +283,41 @@ def clean_textgrid_entries(entries, remove_buzz_anon=True, remove_empty=True, re
     
     removed_counts = {
         'buzz_anon': 0,
+        'buzz_patterns': 0,
+        'brackets': 0,
         'empty': 0,
         'short_audio': 0,
         'silent_audio': 0,
-        'speaker_filter': 0
+        'speaker_filter': 0,
+        'file_filter': 0
     }
     
     for entry in entries:
         should_remove = False
         
-        # Check speaker filter first (most specific)
-        if remove_speakers and should_remove_speaker(entry, remove_speakers):
+        # Check file filter first (most specific)
+        if remove_files and should_remove_files(entry, remove_files):
+            removed_counts['file_filter'] += 1
+            should_remove = True
+        
+        # Check speaker filter (specific)
+        if not should_remove and remove_speakers and should_remove_speaker(entry, remove_speakers):
             removed_counts['speaker_filter'] += 1
             should_remove = True
         
-        # Check buzz anon pattern
+        # Check buzz anon pattern (specific)
         if not should_remove and remove_buzz_anon and should_remove_buzz_anon(entry):
             removed_counts['buzz_anon'] += 1
+            should_remove = True
+        
+        # Check general buzz patterns
+        if not should_remove and remove_buzz_patterns and should_remove_buzz_patterns(entry):
+            removed_counts['buzz_patterns'] += 1
+            should_remove = True
+        
+        # Check brackets
+        if not should_remove and remove_brackets and should_remove_brackets(entry):
+            removed_counts['brackets'] += 1
             should_remove = True
         
         # Check empty/whitespace
@@ -239,8 +343,10 @@ def clean_textgrid_entries(entries, remove_buzz_anon=True, remove_empty=True, re
     if total_removed > 0:
         logger.info(f"Cleaning results: {original_count} -> {len(filtered_entries)} entries "
                    f"(removed {total_removed}: {removed_counts['buzz_anon']} buzz_anon, "
+                   f"{removed_counts['buzz_patterns']} buzz_patterns, {removed_counts['brackets']} brackets, "
                    f"{removed_counts['empty']} empty, {removed_counts['short_audio']} short_audio, "
-                   f"{removed_counts['silent_audio']} silent_audio, {removed_counts['speaker_filter']} speaker_filter)")
+                   f"{removed_counts['silent_audio']} silent_audio, {removed_counts['speaker_filter']} speaker_filter, "
+                   f"{removed_counts['file_filter']} file_filter)")
     
     return filtered_entries
 
