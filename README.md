@@ -2,7 +2,7 @@
 
 ## Preambel
 
-Dieses README beschreibt wie mithilfe des LangAge-Korpus ein ASR-Modell angepasst wird. Dafür werden die wav-Dateien des LangAge-Korpus verarbeitet (z.B. downsampling von 44,1 kHz zu 16 kHz). Um sicherzustellen, dass die Originaldateien nicht verändert werden, empfielt es sich, die Originaldateien in den Ordner `./data` zu kopieren.
+Dieses README beschreibt wie mithilfe des LangAge-Korpus ein ASR-Modell angepasst wird. Dafür werden die wav-Dateien des LangAge-Korpus verarbeitet (z.B. downsampling von 44,1 kHz zu 16 kHz). Es wird angenommen, dass die Original-Dateien gespeichert sind in `./data_original`.
 
 ## Anforderungen
 
@@ -40,11 +40,21 @@ Der Datenverarbeitungsprozess erfolgt in den folgenden Schritten:
 1. **TRS zu TextGrid**: `trs2tg.py` transformiert Transkripte zu TextGrids.
 2. **Audio-Resampling**: `resample44k16k.py` konvertiert alle WAV-Dateien von 44,1 kHz auf 16 kHz
 3. **Dataset Dictionary**: `Textgrid2DatasetBatch.py` verarbeitet TextGrid-Dateien und erstellt Train/Test-Splits mit einer Multiprocessing-Architektur. Die erstellten Splits werden in einem HuggingFace Dataset Dictionary gespeichert. Dabei wird das `clean_TextGrids.py` Modul verwendet, um bestimmte Segmente herauszufiltern (z.B. Segmente mit einer Dauer unter 100 ms)
-4. **Log-Mel Spektrogramme**: Im Dataset Dictionary hinterlegte Audios werden zu Log-Mel Spektrogrammen transformiert.
+4. **Log-Mel Spektrogramme**: `DataSet2LogMelSpecBatch.py` transfomiert im Dataset Dictionary hinterlegte Audios zu Log-Mel Spektrogrammen. Diese werden für das Training/Fine-Tuning von Whisper verwendet.
+5. **Fine-Tuning**: `finetune_whisper_from_LogMel.py`  verwendet die verarbeiteten Transkripte und Audios, um Whisper zu trainieren.
+
+### Sicherheitskopie
+
+Um sicherzustellen, dass die Original-Dateien nicht verändert werden, wird eine Kopie der Original-Dateien erstellt:
+
+```bash
+(.venv)$ mkdir data
+(.venv)$ cp data_original data/LangAge16kHz # audios werden noch von 44,1 kHz zu 16 kHz resampled (s. unten)
+```
 
 ### TRS zu TextGrid
 
-Transkripte werden mit dem Skript `trs2tg.py` zu TextGrids transformiert. Dafür müssen die Transkripte in den Ordner `data/LangAge16kHz` kopiert werden, wo die TextGrids zusammen mit den 16 kHz-Versionen der Audios gespeichert werden.
+Transkripte werden mit dem Skript `trs2tg.py` zu TextGrids transformiert.
 
 ```bash
 (.venv)$ python scripts/trs2tg.py data/LangAge16kHz
@@ -52,9 +62,9 @@ Transkripte werden mit dem Skript `trs2tg.py` zu TextGrids transformiert. Dafür
 
 ### Downsampling 44,1 kHz zu 16 kHz
 
-Zunächst werden die Original-Audioaufnahmen komprimiert, und zwar von 44,1 kHz Sampling-Rate auf 16 kHz Sampling-Rate. Dies kann einige Zeit (d.h. Tage) dauern. Das Skript überschreibt die ursprünglichen Dateien mit den resampelten Versionen. Für den folgenden Befehl gibt es zwei Optionen:
+Als nächstes werden die Original-Audioaufnahmen komprimiert, und zwar von 44,1 kHz Sampling-Rate auf 16 kHz Sampling-Rate. Dies kann einige Zeit (d.h. Tage) dauern. Das Skript überschreibt die ursprünglichen Dateien mit den resampelten Versionen. Für den folgenden Befehl gibt es zwei Optionen:
 
-- `--input_folder`: Spezifiziert den zu verarbeitenden Ordner (sollte `./data/LangAge16kHz` sein; original Dateien müssen vorher hierher kopiert werden).
+- `--input_folder`: Spezifiziert den zu verarbeitenden Ordner.
 - `--processes`: Spezifiziert wie viele Aufnahmen gleichzeitig verarbeitet werden sollen; es können maximal so viele Prozesse ausgewählt werden, wie Cores zur Verfügung stehen. In der Praxis empfiehlt es sich, nicht mehr als die Hälfte der verfügbaren Cores zu verwenden.
 
 ```bash
@@ -123,7 +133,7 @@ Folgende Optionen stehen zur Verfügung:
 - `-i`, `--input_dataset`: Pfad zum Eingabeordner mit dem LangAgeDataSet (HuggingFace Dataset, erforderlich)
 - `-o`, `--output_dataset`: Pfad, unter dem das vorverarbeitete Dataset gespeichert wird (erforderlich)
 - `--num_cpus`: Anzahl der zu verwendenden CPU-Kerne für die Vorverarbeitung. Wenn nicht angegeben, werden alle verfügbaren Kerne genutzt.
-- `--model_size`: Whisper-Modellgröße für die Feature-Extraktion (`tiny`, `base`, `small`, `medium`, `large`; Standard: `large`)
+- `--model_size`: Whisper-Modellgröße für die Feature-Extraktion (`tiny`, `base`, `small`, `medium`, `large`, `large-v2`, `large-v3`; Standard: `large`). Modell 'large V3' benutzt 128 mel bins im Gegensatz zu den anderen Whisper Modellen, die 80 mel bins benutzen.
 - `--shuffle_seed`: Zufalls-Seed für das Mischen der Datasets (Standard: 42)
 - `--max_samples`: Maximale Anzahl zu verarbeitender Samples pro Split (für Tests). Wenn nicht angegeben, werden alle Samples verarbeitet.
 - `--batch_size`: Batch-Größe für die Verarbeitung von Dataset-Chunks (Standard: 1000)
@@ -131,7 +141,7 @@ Folgende Optionen stehen zur Verfügung:
 - `--max_memory_per_worker`: Maximaler Speicher pro Worker in GB (Standard: 4.0)
 
 ```bash
-(.venv)$ python scripts/Dataset2LogMelSpecBatch.py -i data/LangAgeDataSet -o data/LangAgeLogMelSpec --num_cpus 150 --batch_size 1000
+(.venv)$ python scripts/Dataset2LogMelSpecBatch.py -i data/LangAgeDataSet -o data/LangAgeLogMelSpec --model_size large-v3 --num_cpus 150 --batch_size 1000
 ```
 
 ## Fine-tuning von Whisper
@@ -141,13 +151,13 @@ Das `finetune_whisper.py` Skript bietet umfassende Funktionen für das Training 
 ### Grundlegendes Training
 
 ```bash
-(.venv)$ python scripts/finetune_whisper.py \
-    --dataset_path data/LangAgeDataSet \
+(.venv)$ python scripts/finetune_whisper_from_LogMel.py \
+    --dataset_path data/LangAgeLogMelSpec \
     --output_dir FrisperWhisper \
     --version v1 \
-    --model_size medium \
+    --model_size large-v3 \
     --num_gpus 4 \
-    --num_cpus 16 \
+    --num_cpus 40 \
     --per_device_train_batch_size 1 \
     --per_device_eval_batch_size 1 \
     --gradient_accumulation_steps 16
@@ -160,8 +170,8 @@ Das Skript unterstützt das Fortsetzen unterbrochener Trainings von gespeicherte
 #### Automatisches Fortsetzen vom letzten Checkpoint
 
 ```bash
-(.venv)$ python scripts/finetune_whisper.py \
-    --input_dataset data/LangAgeDataSet \
+(.venv)$ python scripts/finetune_whisper_from_LogMel.py \
+    --input_dataset data/LangAgeLogMelSpec \
     --output_dir FrisperWhisper \
     --version v1 \
     --resume_from_checkpoint true
@@ -170,7 +180,7 @@ Das Skript unterstützt das Fortsetzen unterbrochener Trainings von gespeicherte
 #### Fortsetzen von einem spezifischen Checkpoint
 
 ```bash
-(.venv)$ python scripts/finetune_whisper.py \
+(.venv)$ python scripts/finetune_whisper_from_LogMel.py \
     --input_dataset data/LangAgeLogMelSpec \
     --output_dir FrisperWhisper \
     --version v1 \
@@ -180,7 +190,7 @@ Das Skript unterstützt das Fortsetzen unterbrochener Trainings von gespeicherte
 #### Fortsetzen von absolutem Pfad
 
 ```bash
-(.venv)$ python scripts/finetune_whisper.py \
+(.venv)$ scripts/finetune_whisper_from_LogMel.py \
     --input_dataset data/LangAgeLogMelSpec \
     --output_dir FrisperWhisper \
     --version v1 \
@@ -222,7 +232,7 @@ Das `train_whisper.sbatch` Skript führt das Whisper-Training auf dem Cluster du
          OUTPUT_DIR=FrisperWhisper \
          VERSION=v2 \
          MODEL_SIZE=medium \
-         NUM_GPUS=2 \
+         NUM_GPUS=4 \
          MAX_STEPS=10000 \
          sbatch ./scripts/train_whisper.sbatch
 ```
