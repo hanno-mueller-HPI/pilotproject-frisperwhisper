@@ -77,6 +77,28 @@ def should_remove_brackets(entry):
     return False
 
 
+def should_remove_xxx_patterns(entry):
+    """
+    Check if an entry contains two or more consecutive X characters (case-insensitive) and should be removed.
+    This includes patterns like XX, XXX, xxx, XXXX, fa le XXX, etc.
+    
+    Args:
+        entry (dict): Dataset entry with 'sentence' field
+        
+    Returns:
+        bool: True if the entry should be removed, False otherwise
+    """
+    sentence = entry.get('sentence', '').strip()
+    
+    # Check if sentence contains 2 or more consecutive X characters (case-insensitive)
+    import re
+    if re.search(r'[Xx]{2,}', sentence):
+        logger.debug(f"Removing entry with XXX pattern: '{sentence}'")
+        return True
+    
+    return False
+
+
 def should_remove_files(entry, files_to_remove=None):
     """
     Check if an entry comes from specific files that should be completely excluded.
@@ -255,7 +277,8 @@ def should_remove_speaker(entry, speakers_to_remove=None):
 
 def clean_textgrid_entries(entries, remove_buzz_anon=True, remove_buzz_patterns=True, remove_brackets=True,
                           remove_empty=True, remove_short_audio=True, remove_silent_audio=True, 
-                          remove_speakers=None, remove_files=None, min_duration=0.1, silence_threshold=1e-6):
+                          remove_speakers=None, remove_files=None, remove_xxx_patterns=True,
+                          min_duration=0.1, silence_threshold=1e-6):
     """
     Apply all cleaning filters to a list of TextGrid entries.
     
@@ -269,6 +292,7 @@ def clean_textgrid_entries(entries, remove_buzz_anon=True, remove_buzz_patterns=
         remove_silent_audio (bool): Whether to remove silent audio (all zeros)
         remove_speakers (list or str): Speaker(s) to remove (e.g., ['speaker1'] or 'speaker1')
         remove_files (list or str): File basename(s) to remove completely (e.g., ['h015a', 'e025a'])
+        remove_xxx_patterns (bool): Whether to remove entries containing 2+ consecutive X characters
         min_duration (float): Minimum audio duration in seconds
         silence_threshold (float): Threshold below which audio is considered silent
         
@@ -289,7 +313,8 @@ def clean_textgrid_entries(entries, remove_buzz_anon=True, remove_buzz_patterns=
         'short_audio': 0,
         'silent_audio': 0,
         'speaker_filter': 0,
-        'file_filter': 0
+        'file_filter': 0,
+        'xxx_patterns': 0
     }
     
     for entry in entries:
@@ -320,6 +345,11 @@ def clean_textgrid_entries(entries, remove_buzz_anon=True, remove_buzz_patterns=
             removed_counts['brackets'] += 1
             should_remove = True
         
+        # Check XXX patterns (2+ consecutive X characters)
+        if not should_remove and remove_xxx_patterns and should_remove_xxx_patterns(entry):
+            removed_counts['xxx_patterns'] += 1
+            should_remove = True
+        
         # Check empty/whitespace
         if not should_remove and remove_empty and should_remove_empty_or_whitespace(entry):
             removed_counts['empty'] += 1
@@ -344,9 +374,9 @@ def clean_textgrid_entries(entries, remove_buzz_anon=True, remove_buzz_patterns=
         logger.info(f"Cleaning results: {original_count} -> {len(filtered_entries)} entries "
                    f"(removed {total_removed}: {removed_counts['buzz_anon']} buzz_anon, "
                    f"{removed_counts['buzz_patterns']} buzz_patterns, {removed_counts['brackets']} brackets, "
-                   f"{removed_counts['empty']} empty, {removed_counts['short_audio']} short_audio, "
-                   f"{removed_counts['silent_audio']} silent_audio, {removed_counts['speaker_filter']} speaker_filter, "
-                   f"{removed_counts['file_filter']} file_filter)")
+                   f"{removed_counts['xxx_patterns']} xxx_patterns, {removed_counts['empty']} empty, "
+                   f"{removed_counts['short_audio']} short_audio, {removed_counts['silent_audio']} silent_audio, "
+                   f"{removed_counts['speaker_filter']} speaker_filter, {removed_counts['file_filter']} file_filter)")
     
     return filtered_entries
 

@@ -28,18 +28,18 @@ echo "Node: $SLURMD_NODENAME"
 echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
 
 # Configuration for large-v3 training
-DATASET_PATH="data/LangAgeLogMelSpecV2"
-OUTPUT_DIR="FrisperWhisper/largeV3"
+DATASET_PATH="data/LangAgeLogMelSpec"
+OUTPUT_DIR="FrisperWhisper/largeV3.1"
 MODEL_SIZE="large-v3"
 NUM_GPUS=4
 DATALOADER_WORKERS=20
 TRAIN_BATCH_SIZE=1                    # Conservative for large-v3
 GRADIENT_ACCUMULATION=16              # Effective batch size = 1×4×16 = 64
 LEARNING_RATE=3e-6                    # Conservative for stability
-MAX_STEPS=20000                       # Sufficient for convergence
-WARMUP_STEPS=2000                     # 7.5% of max steps
-SAVE_STEPS=1000
-EVAL_STEPS=1000
+MAX_STEPS=10000                       # Sufficient for convergence
+WARMUP_STEPS=1000                     # 7.5% of max steps
+SAVE_STEPS=500
+EVAL_STEPS=500
 LOGGING_STEPS=50
 
 echo "========================================="

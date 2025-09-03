@@ -1,3 +1,60 @@
+Metadata-Version: 2.4
+Name: tts-langage
+Version: 0.1.0
+Summary: TTS Language Age Dataset Processing and Whisper Fine-tuning
+Author-email: Hanno Müller <hanno.mueller@hpi.de>
+License: MIT
+Project-URL: Homepage, https://github.com/hanno-mueller-HPI/TTS-LangAge
+Project-URL: Repository, https://github.com/hanno-mueller-HPI/TTS-LangAge
+Project-URL: Issues, https://github.com/hanno-mueller-HPI/TTS-LangAge/issues
+Keywords: whisper,speech,tts,fine-tuning,language,age
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Multimedia :: Sound/Audio :: Speech
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: torch
+Requires-Dist: transformers
+Requires-Dist: datasets
+Requires-Dist: accelerate
+Requires-Dist: evaluate
+Requires-Dist: librosa
+Requires-Dist: soundfile
+Requires-Dist: sounddevice
+Requires-Dist: torchcodec
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: chardet
+Requires-Dist: jupyter
+Requires-Dist: ipykernel
+Requires-Dist: tqdm
+Requires-Dist: rich
+Requires-Dist: click
+Requires-Dist: jiwer>=4.0.0
+Requires-Dist: tensorboard>=2.20.0
+Requires-Dist: num2words>=0.5.14
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pytest-cov; extra == "dev"
+Requires-Dist: black; extra == "dev"
+Requires-Dist: isort; extra == "dev"
+Requires-Dist: flake8; extra == "dev"
+Requires-Dist: mypy; extra == "dev"
+Provides-Extra: gpu
+Requires-Dist: torch[cuda]; extra == "gpu"
+Requires-Dist: accelerate[cuda]; extra == "gpu"
+Provides-Extra: metrics
+Requires-Dist: jiwer; extra == "metrics"
+Requires-Dist: tensorboard; extra == "metrics"
+Requires-Dist: wandb; extra == "metrics"
+Provides-Extra: all
+Requires-Dist: tts-langage[dev,gpu,metrics]; extra == "all"
+
 # KI-Transkripte als linguistische Forschungsdaten: Feintuning eines Modells für das gesprochene Französisch mit Integration prosodischer Daten
 
 ## Preambel
@@ -31,7 +88,7 @@ Dann werden die benötigten Pakete installiert. UV sorgt dafür, dass die exakte
 (.venv)$ uv sync --active  # installiert exakte Versionen
 ```
 
-## Fine-Tuning Whisper
+## Datenverarbeitung
 
 ### Workflow-Übersicht
 
@@ -39,13 +96,7 @@ Der Datenverarbeitungsprozess erfolgt in den folgenden Schritten:
 
 1. **TRS zu TextGrid**: `trs2tg.py` transformiert Transkripte zu TextGrids.
 2. **Audio-Resampling**: `resample44k16k.py` konvertiert alle WAV-Dateien von 44,1 kHz auf 16 kHz
-3. **Dataset Dictionary**: `Textgrid2DatasetBatch.py` verarbeitet TextGrid-Dateien und erstellt Train/Test-Splits mit einer Multiprocessing-Architektur. Die erstellten Splits werden in einem HuggingFace Dataset Dictionary gespeichert. Dabei wird das `modules/clean_TextGrids.py` Modul verwendet, um bestimmte Segmente herauszufiltern:
-   - Segmente mit einer Dauer unter 100 ms
-   - Segmente von spk1 (Interviewer)
-   - Segmente mit Klammer-Inhalten `( )`, `[ ]`, `< >`
-   - Segmente mit (buzz)-Mustern
-   - Segmente mit XXX-Mustern (zwei oder mehr aufeinanderfolgende X-Zeichen)
-   - Leere oder sehr kurze Audio-Segmente
+3. **Dataset Dictionary**: `Textgrid2DatasetBatch.py` verarbeitet TextGrid-Dateien und erstellt Train/Test-Splits mit einer Multiprocessing-Architektur. Die erstellten Splits werden in einem HuggingFace Dataset Dictionary gespeichert. Dabei wird das `clean_TextGrids.py` Modul verwendet, um bestimmte Segmente herauszufiltern (z.B. Segmente mit einer Dauer unter 100 ms)
 4. **Log-Mel Spektrogramme**: `DataSet2LogMelSpecBatch.py` transfomiert im Dataset Dictionary hinterlegte Audios zu Log-Mel Spektrogrammen. Diese werden für das Training/Fine-Tuning von Whisper verwendet.
 5. **Fine-Tuning**: `finetune_whisper_from_LogMel.py`  verwendet die verarbeiteten Transkripte und Audios, um Whisper zu trainieren.
 
@@ -81,7 +132,7 @@ Als nächstes werden die Original-Audioaufnahmen komprimiert, und zwar von 44,1 
 
 Die Textgrids und Audios (16 kHz) werden als DataSet Dictionary (DataSetDict) gespeichert. Das DataSetDict besteht aus zwei Datasets, eines für Training (z.B. 80%) und eines zum Testen (z.B. 20%). Das Test-Set besteht, unter anderem, aus den händisch-kurierten Intervallen, die in einer CSV-Datei spezifiziert werden können. 
 
-Das Skript `Textgrid2DatasetBatch.py` nutzt eine Multiprocessing-Architektur mit robusten Audio-Handling für große Dateien und für Memory-Effizienz. Zusätzlich werden die Daten automatisch via `modules/clean_TextGrids.py` bereinigt:
+Das Skript `Textgrid2DatasetBatch.py` nutzt eine Multiprocessing-Architektur mit robusten Audio-Handling für große Dateien und für Memory-Effizienz. Zusätzlich werden die Daten automatisch via `clean_TextGrids.py` bereinigt:
 
 **Automatische Datenbereinigung:**
 - Entfernung zu kurzer Segmente (< 100ms)
@@ -150,10 +201,11 @@ Folgende Optionen stehen zur Verfügung:
 (.venv)$ python scripts/Dataset2LogMelSpecBatch.py -i data/LangAgeDataSet -o data/LangAgeLogMelSpec --model_size large-v3 --num_cpus 150 --batch_size 1000
 ```
 
-
-### Grundlegendes Training
+## Fine-tuning von Whisper
 
 Das `finetune_whisper.py` Skript bietet umfassende Funktionen für das Training von Whisper-Modellen mit GPU-Optimierung und Checkpoint-Unterstützung.
+
+### Grundlegendes Training
 
 ```bash
 (.venv)$ python scripts/finetune_whisper_from_LogMel.py \
@@ -168,11 +220,11 @@ Das `finetune_whisper.py` Skript bietet umfassende Funktionen für das Training 
     --gradient_accumulation_steps 16
 ```
 
-#### Training von Checkpoints fortsetzen
+### Training von Checkpoints fortsetzen
 
 Das Skript unterstützt das Fortsetzen unterbrochener Trainings von gespeicherten Checkpoints:
 
-##### Automatisches Fortsetzen vom letzten Checkpoint
+#### Automatisches Fortsetzen vom letzten Checkpoint
 
 ```bash
 (.venv)$ python scripts/finetune_whisper_from_LogMel.py \
@@ -182,7 +234,7 @@ Das Skript unterstützt das Fortsetzen unterbrochener Trainings von gespeicherte
     --resume_from_checkpoint true
 ```
 
-##### Fortsetzen von einem spezifischen Checkpoint
+#### Fortsetzen von einem spezifischen Checkpoint
 
 ```bash
 (.venv)$ python scripts/finetune_whisper_from_LogMel.py \
@@ -192,7 +244,7 @@ Das Skript unterstützt das Fortsetzen unterbrochener Trainings von gespeicherte
     --resume_from_checkpoint checkpoint-1000
 ```
 
-##### Fortsetzen von absolutem Pfad
+#### Fortsetzen von absolutem Pfad
 
 ```bash
 (.venv)$ scripts/finetune_whisper_from_LogMel.py \
@@ -207,25 +259,6 @@ Das Skript unterstützt das Fortsetzen unterbrochener Trainings von gespeicherte
 - Jeder Checkpoint enthält Modellgewichte, Optimizer-Status, Scheduler-Status und Trainingsfortschritt
 - Das Training wird exakt an der Stelle fortgesetzt, an der es unterbrochen wurde
 - Falls der angegebene Checkpoint nicht existiert, startet das Training von vorne mit einer Warnung
-
-
-## Transkribieren mit Whisper
-
-Das Skript `run_whisper_comparison_pipeline.py` ermöglicht einen systematischen Vergleich zwischen dem ursprünglichen Whisper Large V3 Modell und einem fine-tuned Modell. Es verarbeitet Audio-Segmente aus TextGrid-Dateien und berechnet verschiedene Metriken (WER, CER, BLEU) für die Bewertung der Transkriptionsqualität.
-
-```bash
-(.venv)$ python scripts/run_whisper_comparison_pipeline.py \
-    --input data/LangAge16kHz \
-    --output data/csv/comparison_results.csv \
-    --fine_tuned_model FrisperWhisper/largeV3 \
-    --checkpoint checkpoint-6000 \
-    --cpus 32 \
-    --gpus 4 \
-    --batch_size 16 \
-    --transcription_batch_processes 1 \
-    --steps all
-```
-
 
 ## SLURM
 
@@ -288,6 +321,7 @@ Das `train_whisper.sbatch` Skript führt das Whisper-Training auf dem Cluster du
 ### TODOs
 - [ ] Transcription-Skript für Inferenz mit fine-tuned Modellen (`transcribe_with_finetuned.py`)
 - [ ] Integriertes Training-Skript für End-to-End Pipeline
+- [ ] Automatisierte Evaluation nach dem Training
 
 
 

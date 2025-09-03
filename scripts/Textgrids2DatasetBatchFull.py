@@ -1,9 +1,9 @@
 #############################################################################
-# Script Name: TextgridDatasetBatch.py                                      #
-# Description: Improved version with multiprocessing for batches and robust #
-#              audio loading handling for large files                       #
+# Script Name: Textgrids2DatasetBatchFull.py                               #
+# Description: Create full dataset without train/test split for model      #
+#              comparison - only removes silent/empty/(buzz) segments      #
 # Author: Hanno Müller                                                      #
-# Date: 2025-07-24                                                          #
+# Date: 2025-09-03                                                          #
 #############################################################################
 
 ### Required Libraries ######################################################
@@ -16,7 +16,7 @@ import soundfile as sf
 import pandas as pd
 import numpy as np
 import librosa
-from datasets import Dataset, DatasetDict, Features, Value
+from datasets import Dataset, Features, Value
 from multiprocessing import Pool, cpu_count
 import traceback
 import random
@@ -198,7 +198,7 @@ class TextGrid:
 
 def parse_arguments():
     """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description="Create train/test split of TextGrid data with improved multiprocessing.")
+    parser = argparse.ArgumentParser(description="Create full dataset without train/test split for model comparison.")
     parser.add_argument(
         "-f", "--folder",
         type=str,
@@ -209,18 +209,13 @@ def parse_arguments():
         "-o", "--output_folder",
         type=str,
         required=True,
-        help="Path where the final DataSetDict should be stored"
+        help="Path where the final Dataset should be stored"
     )
     parser.add_argument(
         "-n", "--number_of_processes",
         type=int,
         default=4,
         help="Number of processes to run in parallel (default: 4)"
-    )
-    parser.add_argument(
-        "-c", "--csv_file",
-        type=str,
-        help="CSV file with test set intervals (columns: path, speaker, interval)"
     )
     parser.add_argument(
         "--batch_size",
@@ -250,6 +245,7 @@ def load_textgrids_from_folder(folder_path):
 def process_textgrid_lightweight(args_tuple):
     """
     Process a single TextGrid file and return lightweight entries without audio arrays.
+    Only applies minimal cleaning - removes silent/empty/(buzz) segments.
     """
     textgrid_path, file_index = args_tuple
     
@@ -261,27 +257,27 @@ def process_textgrid_lightweight(args_tuple):
         entries = textgrid.to_dataset_entries_lightweight()
         original_count = len(entries)
         
-        # Apply cleaning filters - including speaker1 removal, silent audio, and timing-based filtering
+        # Apply MINIMAL cleaning filters - only remove silent, empty, or (buzz) segments
         cleaned_entries = clean_textgrid_entries(
             entries,
-            remove_buzz_anon=True,
-            remove_buzz_patterns=True,        # Remove all entries containing (buzz) patterns
-            remove_brackets=True,             # Remove all entries containing brackets ( ) [ ] < >
-            remove_xxx_patterns=True,         # Remove all entries containing 2+ consecutive X characters
-            remove_empty=True,
-            remove_short_audio=True,          # Enable duration-based filtering for empty/short audio
-            remove_silent_audio=True,         # Remove silent audio (all zeros)
-            remove_speakers=['spk1'],         # Remove all segments from speaker1
-            remove_files=['h015a', 'e025a', 'd048a'],  # Remove all segments from specific files
-            min_duration=0.1,                 # Minimum audio duration in seconds
-            silence_threshold=1e-6             # Threshold for detecting silent audio
+            remove_buzz_anon=False,              # Keep anonymous markers
+            remove_buzz_patterns=True,           # Remove (buzz) patterns only
+            remove_brackets=False,               # Keep other brackets
+            remove_xxx_patterns=False,           # Keep XXX patterns
+            remove_empty=True,                   # Remove empty segments
+            remove_short_audio=True,             # Remove very short segments
+            remove_silent_audio=True,            # Remove silent audio (all zeros)
+            remove_speakers=[],                  # Don't remove any speakers
+            remove_files=[],                     # Don't remove any files
+            min_duration=0.1,                    # Minimum audio duration in seconds
+            silence_threshold=1e-6               # Threshold for detecting silent audio
         )
         
         cleaned_count = len(cleaned_entries)
         total_removed = original_count - cleaned_count
         
         print(f"Processed {textgrid_path}: {original_count} entries -> {cleaned_count} entries "
-              f"(removed {total_removed} entries by cleaning filters)")
+              f"(removed {total_removed} entries: silent/empty/(buzz) only)")
         
         return cleaned_entries
             
@@ -411,83 +407,6 @@ def process_entries_batch_multiprocess(entries_batch, num_processes=2):
                 processed_entries.append(result)
         return processed_entries
 
-def load_csv_test_intervals(csv_path):
-    """Load test intervals from CSV file."""
-    if not csv_path or not os.path.exists(csv_path):
-        return set()
-    
-    df = pd.read_csv(csv_path)
-    required_columns = ['path', 'speaker', 'interval']
-    
-    if not all(col in df.columns for col in required_columns):
-        print(f"Warning: CSV file must contain columns: {required_columns}")
-        return set()
-    
-    test_intervals = set()
-    for _, row in df.iterrows():
-        # Create a unique identifier for each interval
-        interval_id = f"{row['path']}_{row['speaker']}_{row['interval']}"
-        test_intervals.add(interval_id)
-    
-    print(f"Loaded {len(test_intervals)} test intervals from CSV")
-    return test_intervals
-
-def create_interval_id(entry):
-    """Create a unique identifier for an interval entry."""
-    return f"{entry['textgrid_path']}_{entry['speaker']}_{entry['interval_idx']}"
-
-def split_train_test(all_entries, test_intervals, seed=42):
-    """
-    Split entries into train and test sets based on CSV intervals and random sampling.
-    """
-    random.seed(seed)
-    np.random.seed(seed)
-    
-    total_entries = len(all_entries)
-    target_test_size = int(0.2 * total_entries)
-    
-    print(f"Total entries: {total_entries}")
-    print(f"Target test size (20%): {target_test_size}")
-    
-    # Separate entries based on CSV intervals
-    csv_test_entries = []
-    remaining_entries = []
-    
-    for entry in all_entries:
-        interval_id = create_interval_id(entry)
-        if interval_id in test_intervals:
-            csv_test_entries.append(entry)
-        else:
-            remaining_entries.append(entry)
-    
-    print(f"CSV test entries: {len(csv_test_entries)}")
-    print(f"Remaining entries: {len(remaining_entries)}")
-    
-    if len(csv_test_entries) > target_test_size:
-        # Too many CSV test entries, randomly sample
-        test_entries = random.sample(csv_test_entries, target_test_size)
-        test_ids = {create_interval_id(e) for e in test_entries}
-        train_entries = remaining_entries + [e for e in csv_test_entries if create_interval_id(e) not in test_ids]
-        print(f"Randomly sampled {target_test_size} entries from CSV test set")
-    elif len(csv_test_entries) < target_test_size:
-        # Not enough CSV test entries, add random entries
-        additional_needed = target_test_size - len(csv_test_entries)
-        additional_test = random.sample(remaining_entries, min(additional_needed, len(remaining_entries)))
-        test_entries = csv_test_entries + additional_test
-        additional_test_ids = {create_interval_id(e) for e in additional_test}
-        train_entries = [e for e in remaining_entries if create_interval_id(e) not in additional_test_ids]
-        print(f"Added {len(additional_test)} random entries to reach target test size")
-    else:
-        # Perfect match
-        test_entries = csv_test_entries
-        train_entries = remaining_entries
-        print("CSV test entries exactly match target test size")
-    
-    print(f"Final train size: {len(train_entries)}")
-    print(f"Final test size: {len(test_entries)}")
-    
-    return train_entries, test_entries
-
 def create_dataset_from_entries(entries, name, batch_size=500, audio_processes=2):
     """Create a HuggingFace Dataset from entries with proper Audio feature and multiprocessing."""
     if not entries:
@@ -539,7 +458,7 @@ def create_dataset_from_entries(entries, name, batch_size=500, audio_processes=2
 ### main ######################################################################
 
 if __name__ == "__main__":
-    # Set random seed
+    # Set random seed for reproducibility
     random.seed(42)
     np.random.seed(42)
     
@@ -563,6 +482,7 @@ if __name__ == "__main__":
         
         # Process TextGrids in parallel - collect lightweight entries
         print(f"Processing TextGrids with {args.number_of_processes} processes...")
+        print("🔧 Minimal cleaning: Only removing silent/empty/(buzz) segments")
         
         # Prepare arguments for worker processes
         worker_args = [(path, idx) for idx, path in enumerate(textgrid_paths)]
@@ -577,56 +497,37 @@ if __name__ == "__main__":
         
         print(f"Total entries collected: {len(all_entries)}")
         
-        # Load CSV test intervals if provided
-        test_intervals = load_csv_test_intervals(args.csv_file)
+        if not all_entries:
+            print("❌ No valid entries found after minimal cleaning. No dataset created.")
+            exit(1)
         
-        # Split into train and test
-        train_entries, test_entries = split_train_test(all_entries, test_intervals)
+        # Create full dataset (no train/test split)
+        print("Creating full dataset for model comparison...")
+        full_dataset = create_dataset_from_entries(
+            all_entries, "full", args.batch_size, args.audio_batch_processes
+        )
         
-        # Clear original entries from memory
+        # Clear entries from memory
         del all_entries
         gc.collect()
         
-        # Create datasets from entries with audio loading
-        print("Creating train dataset...")
-        train_dataset = create_dataset_from_entries(
-            train_entries, "train", args.batch_size, args.audio_batch_processes
-        )
-        
-        # Clear train entries from memory
-        del train_entries
-        gc.collect()
-        
-        print("Creating test dataset...")
-        test_dataset = create_dataset_from_entries(
-            test_entries, "test", args.batch_size, args.audio_batch_processes
-        )
-        
-        # Clear test entries from memory
-        del test_entries
-        gc.collect()
-        
-        # Create DataSetDict only if we have datasets
-        if train_dataset is not None and test_dataset is not None:
-            dataset_dict = DatasetDict({
-                'train': train_dataset,
-                'test': test_dataset
-            })
-            
-            # Save the final dataset
+        # Save the final dataset
+        if full_dataset is not None:
             output_path = Path(args.output_folder)
             output_path.mkdir(parents=True, exist_ok=True)
             
-            print(f"Saving DataSetDict to {output_path}...")
-            dataset_dict.save_to_disk(str(output_path))
+            print(f"Saving Dataset to {output_path}...")
+            full_dataset.save_to_disk(str(output_path))
             
-            print("Dataset creation completed successfully!")
-            print(f"Train dataset: {len(train_dataset)} entries")
-            print(f"Test dataset: {len(test_dataset)} entries")
+            print("✅ Full dataset creation completed successfully!")
+            print(f"📊 Total entries: {len(full_dataset)}")
+            print(f"💾 Saved to: {output_path}")
+            print("\n🎯 Dataset ready for model comparison:")
+            print("   - Fine-tuned Whisper transcription")
+            print("   - Whisper Large V3 transcription")
+            print("   - Metadata analysis with multi-interview speakers")
         else:
-            print("No valid entries found after cleaning. No dataset created.")
-            print(f"Train dataset: {len(train_dataset) if train_dataset else 0} entries")
-            print(f"Test dataset: {len(test_dataset) if test_dataset else 0} entries")
+            print("❌ No valid entries found after processing. No dataset created.")
         
     except Exception as e:
         print(f"Error during dataset creation: {e}")

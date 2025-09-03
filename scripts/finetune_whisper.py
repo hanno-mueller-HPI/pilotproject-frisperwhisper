@@ -138,8 +138,6 @@ def parse_arguments():
         help="Learning rate scheduler type (default: cosine)"
     )
     
-
-    
     parser.add_argument(
         "--early_stopping_patience",
         type=int,
