@@ -287,7 +287,6 @@ Das `train_whisper.sbatch` Skript führt das Whisper-Training auf dem Cluster du
 
 ### TODOs
 - [ ] Transcription-Skript für Inferenz mit fine-tuned Modellen (`transcribe_with_finetuned.py`)
-- [ ] Integriertes Training-Skript für End-to-End Pipeline
 
 
 

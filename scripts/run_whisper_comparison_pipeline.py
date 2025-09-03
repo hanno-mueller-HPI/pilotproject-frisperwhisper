@@ -216,9 +216,6 @@ def create_final_dataframe(segments):
     # Define columns in desired order
     columns = [
         'filename',
-        'segment_id',
-        'start_time',
-        'end_time',
         'speaker_id', 
         'interview_number',
         'gender',
@@ -246,10 +243,6 @@ def create_final_dataframe(segments):
         for col in columns:
             if col == 'segment_duration':
                 row[col] = segment.get('duration', 0.0)
-            elif col == 'start_time':
-                row[col] = segment.get('start_time', 0.0)
-            elif col == 'end_time':
-                row[col] = segment.get('end_time', 0.0)
             elif col == 'markers':
                 # Convert markers list to string
                 markers = segment.get('markers', [])

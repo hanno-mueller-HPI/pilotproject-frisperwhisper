@@ -44,9 +44,7 @@ class WhisperTranscriber:
         
         # Load model and processor
         try:
-            # Always use the base model's processor for consistency
-            base_model = "openai/whisper-large-v3" if self.is_fine_tuned else self.model_name
-            self.processor = WhisperProcessor.from_pretrained(base_model)
+            self.processor = WhisperProcessor.from_pretrained(self.model_name)
             
             # Determine device and dtype based on availability
             if torch.cuda.is_available() and device_map != "cpu":
@@ -61,12 +59,8 @@ class WhisperTranscriber:
             self.model = WhisperForConditionalGeneration.from_pretrained(
                 self.model_name,
                 device_map=device_map,
-                torch_dtype=torch_dtype,
-                attn_implementation="eager"  # Use eager attention to avoid compatibility issues
+                torch_dtype=torch_dtype
             )
-            
-            # Ensure model and inputs use the same dtype
-            self.torch_dtype = torch_dtype
             
             print(f"   Model loaded on: {device_map}")
                 
@@ -163,41 +157,25 @@ class WhisperTranscriber:
             return []
         
         try:
-            # Filter out empty or too short segments
-            valid_segments = []
-            for i, seg in enumerate(audio_segments):
-                if len(seg) > 0:
-                    # Ensure minimum length (0.1 seconds at 16kHz = 1600 samples)
-                    if len(seg) < 1600:
-                        # Pad short segments
-                        padded = np.pad(seg, (0, 1600 - len(seg)), mode='constant', constant_values=0)
-                        valid_segments.append((i, padded))
-                    else:
-                        valid_segments.append((i, seg))
-            
+            # Filter out empty segments
+            valid_segments = [(i, seg) for i, seg in enumerate(audio_segments) if len(seg) > 0]
             if not valid_segments:
                 return [{"text": ""} for _ in audio_segments]
             
             indices, segments = zip(*valid_segments)
             
-            # Process segments with proper parameters
+            # Process segments
             inputs = self.processor(
                 list(segments),
                 sampling_rate=16000,
                 return_tensors="pt",
-                padding=True,
-                language="de",  # Specify German language
-                task="transcribe"  # Specify transcription task
+                padding=True
             )
             
-            # Ensure proper dtype and device
+            # Move to appropriate device
             if torch.cuda.is_available() and self.model.device.type != 'cpu':
-                # Convert to the model's dtype before moving to device
-                inputs = {k: v.to(dtype=self.torch_dtype).to(self.model.device) 
-                         for k, v in inputs.items()}
-            else:
-                # For CPU inference, ensure float32
-                inputs = {k: v.to(dtype=torch.float32) for k, v in inputs.items()}
+                inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
+            # For CPU inference, inputs stay on CPU
             
             # Generate transcriptions
             with torch.no_grad():
@@ -205,16 +183,12 @@ class WhisperTranscriber:
                     generated_ids = self.model.generate(
                         inputs["input_features"],
                         return_timestamps=True,
-                        max_length=448,
-                        language="de",
-                        task="transcribe"
+                        max_length=448
                     )
                 else:
                     generated_ids = self.model.generate(
                         inputs["input_features"],
-                        max_length=448,
-                        language="de",
-                        task="transcribe"
+                        max_length=448
                     )
             
             # Decode results
@@ -232,7 +206,6 @@ class WhisperTranscriber:
             
         except Exception as e:
             print(f"Batch transcription error: {e}")
-            # Return empty results for this batch
             return [{"text": ""} for _ in audio_segments]
     
     def transcribe_segments(self, segments, progress_callback=None):
