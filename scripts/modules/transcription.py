@@ -1,9 +1,9 @@
-#############################################################################
-# Module: transcription.py                                                  #
-# Description: GPU-accelerated transcription with batch processing          #
-# Author: Hanno Müller                                                      #
-# Date: 2025-09-03                                                          #
-#############################################################################
+############################################################################
+# Module: transcription.py                                                #
+# Description: Fixed GPU-accelerated transcription with proper padding    #
+# Author: Hanno Müller                                                    #
+# Date: 2025-09-05 (Fixed version)                                        #
+############################################################################
 
 import os
 import torch
@@ -18,52 +18,51 @@ from pathlib import Path
 
 
 class WhisperTranscriber:
-    """GPU-accelerated Whisper transcriber with batch processing."""
+    """Enhanced Whisper transcriber with proper short segment handling."""
     
-    def __init__(self, model_path=None, device_map="auto", batch_size=32):
+    def __init__(self, model_path, device="auto"):
         """
-        Initialize Whisper transcriber.
+        Initialize the Whisper transcriber.
         
         Args:
-            model_path (str, optional): Path to fine-tuned model. If None, uses openai/whisper-large-v3
-            device_map (str): Device mapping strategy
-            batch_size (int): Batch size for processing
+            model_path (str): Path to the Whisper model
+            device (str): Device to use ('auto', 'cpu', 'cuda')
         """
-        self.batch_size = batch_size
-        self.device_map = device_map
-        
-        # Determine model to load
-        if model_path:
-            self.model_name = model_path
-            self.is_fine_tuned = True
-        else:
-            self.model_name = "openai/whisper-large-v3"
-            self.is_fine_tuned = False
-        
-        print(f"Loading Whisper model: {self.model_name}")
-        
-        # Load model and processor
+        self.model_path = model_path
+        self.model = None
+        self.processor = None
+        self.device = device
+        self.torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+        self._load_model()
+    
+    def _load_model(self):
+        """Load the Whisper model and processor."""
         try:
-            self.processor = WhisperProcessor.from_pretrained(self.model_name)
+            print(f"Loading Whisper model: {self.model_path}")
             
-            # Determine device and dtype based on availability
-            if torch.cuda.is_available() and device_map != "cpu":
-                device_map = device_map
-                torch_dtype = torch.float16
-                print(f"   Using GPU with float16")
+            # Load processor (always use the base Whisper processor)
+            if "openai/whisper" in self.model_path:
+                self.processor = WhisperProcessor.from_pretrained(self.model_path)
             else:
-                device_map = "cpu"
-                torch_dtype = torch.float32
-                print(f"   Using CPU with float32")
+                # For fine-tuned models, use the base processor
+                self.processor = WhisperProcessor.from_pretrained("openai/whisper-large-v3")
             
+            # Load model
             self.model = WhisperForConditionalGeneration.from_pretrained(
-                self.model_name,
-                device_map=device_map,
-                torch_dtype=torch_dtype
+                self.model_path,
+                torch_dtype=self.torch_dtype
             )
             
+            # Set device
+            if self.device == "auto":
+                device_map = "cuda" if torch.cuda.is_available() else "cpu"
+            else:
+                device_map = self.device
+            
+            self.model = self.model.to(device_map)
+            print(f"   Using {'GPU' if torch.cuda.is_available() else 'CPU'} with {self.torch_dtype}")
             print(f"   Model loaded on: {device_map}")
-                
+            
         except Exception as e:
             print(f"Error loading model: {e}")
             raise
@@ -82,73 +81,73 @@ class WhisperTranscriber:
             np.ndarray: Audio array
         """
         try:
-            # Method 1: Try soundfile with seek (for smaller files)
-            start_sample = int(start_time * target_sr)
-            end_sample = int(end_time * target_sr)
-            
             with sf.SoundFile(audio_path) as audio_file:
-                # Check if file might be too large for reliable seeking
+                # Get file info
                 file_duration = audio_file.frames / audio_file.samplerate
-                if file_duration > 1800:  # 30 minutes threshold
-                    raise Exception("File too large for soundfile seeking")
                 
-                # Resample if needed
+                # Clamp times to file bounds
+                start_time = max(0, min(start_time, file_duration))
+                end_time = max(start_time, min(end_time, file_duration))
+                
                 if audio_file.samplerate != target_sr:
-                    # Load full segment and resample
+                    # Resample needed
                     audio_file.seek(int(start_time * audio_file.samplerate))
                     frames_to_read = int((end_time - start_time) * audio_file.samplerate)
                     audio_array = audio_file.read(frames_to_read)
                     audio_array = librosa.resample(
-                        audio_array, 
-                        orig_sr=audio_file.samplerate, 
+                        audio_array,
+                        orig_sr=audio_file.samplerate,
                         target_sr=target_sr
                     )
                 else:
-                    audio_file.seek(start_sample)
-                    frames_to_read = end_sample - start_sample
+                    # No resampling needed
+                    audio_file.seek(int(start_time * target_sr))
+                    frames_to_read = int((end_time - start_time) * target_sr)
                     audio_array = audio_file.read(frames_to_read)
                 
-            return np.asarray(audio_array, dtype=np.float32)
-            
-        except Exception:
-            # Method 2: Fallback to ffmpeg for large files
-            try:
-                duration = end_time - start_time
-                with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
-                    temp_path = temp_file.name
+                # Ensure mono
+                if len(audio_array.shape) > 1:
+                    audio_array = np.mean(audio_array, axis=1)
                 
-                # Extract segment with ffmpeg
-                cmd = [
-                    'ffmpeg', '-i', audio_path,
-                    '-ss', str(start_time),
-                    '-t', str(duration),
-                    '-acodec', 'pcm_s16le',
-                    '-ar', str(target_sr),
-                    '-ac', '1',
-                    '-y', temp_path,
-                    '-loglevel', 'quiet'
-                ]
+                return audio_array.astype(np.float32)
                 
-                result = subprocess.run(cmd, capture_output=True)
-                if result.returncode == 0:
-                    audio_array, _ = librosa.load(temp_path, sr=target_sr, mono=True)
-                    os.unlink(temp_path)
-                    return audio_array.astype(np.float32)
-                else:
-                    os.unlink(temp_path)
-                    return np.array([], dtype=np.float32)
-                    
-            except Exception as e:
-                print(f"Audio loading failed for {audio_path} [{start_time:.2f}-{end_time:.2f}s]: {e}")
-                return np.array([], dtype=np.float32)
+        except Exception as e:
+            print(f"Audio loading failed for {audio_path} [{start_time:.2f}-{end_time:.2f}s]: {e}")
+            return np.array([], dtype=np.float32)
     
-    def transcribe_batch(self, audio_segments, return_timestamps=False):
+    def _pad_or_truncate_audio(self, audio_array, target_length_seconds=30.0, sample_rate=16000):
         """
-        Transcribe a batch of audio segments.
+        Pad or truncate audio to target length for consistent processing.
+        
+        Args:
+            audio_array (np.ndarray): Input audio
+            target_length_seconds (float): Target length in seconds
+            sample_rate (int): Sample rate
+            
+        Returns:
+            np.ndarray: Padded/truncated audio
+        """
+        target_samples = int(target_length_seconds * sample_rate)
+        
+        if len(audio_array) == 0:
+            # Return silence for empty audio
+            return np.zeros(target_samples, dtype=np.float32)
+        elif len(audio_array) < target_samples:
+            # Pad with silence
+            padding = target_samples - len(audio_array)
+            return np.pad(audio_array, (0, padding), mode='constant', constant_values=0)
+        else:
+            # Truncate to target length
+            return audio_array[:target_samples]
+    
+    def transcribe_batch(self, audio_segments, return_timestamps=False, min_segment_length=0.1):
+        """
+        Transcribe a batch of audio segments with proper padding.
         
         Args:
             audio_segments (list): List of audio arrays
             return_timestamps (bool): Whether to return timestamp information
+            min_segment_length (float): Minimum segment length in seconds
             
         Returns:
             list: List of transcription dictionaries
@@ -157,78 +156,83 @@ class WhisperTranscriber:
             return []
         
         try:
-            # Filter out empty segments
-            valid_segments = [(i, seg) for i, seg in enumerate(audio_segments) if len(seg) > 0]
-            if not valid_segments:
-                return [{"text": ""} for _ in audio_segments]
+            results = []
             
-            indices, segments = zip(*valid_segments)
-            
-            # Process segments
-            inputs = self.processor(
-                list(segments),
-                sampling_rate=16000,
-                return_tensors="pt",
-                padding=True
-            )
-            
-            # Move to appropriate device
-            if torch.cuda.is_available() and self.model.device.type != 'cpu':
-                inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
-            # For CPU inference, inputs stay on CPU
-            
-            # Generate transcriptions
-            with torch.no_grad():
-                if return_timestamps:
-                    generated_ids = self.model.generate(
-                        inputs["input_features"],
-                        return_timestamps=True,
-                        max_length=448
-                    )
+            for i, audio in enumerate(audio_segments):
+                # Skip very short or empty segments
+                if len(audio) < int(min_segment_length * 16000):
+                    results.append({"text": ""})
+                    continue
+                
+                # Pad audio to 30 seconds (Whisper's expected input length)
+                padded_audio = self._pad_or_truncate_audio(audio, target_length_seconds=30.0)
+                
+                # Process single segment
+                inputs = self.processor(
+                    padded_audio,
+                    sampling_rate=16000,
+                    return_tensors="pt"
+                )
+                
+                # CRITICAL: Convert inputs to match model dtype
+                if torch.cuda.is_available() and self.model.device.type != 'cpu':
+                    inputs = {k: v.to(self.model.device, dtype=self.torch_dtype if 'input_features' in k else v.dtype) 
+                             for k, v in inputs.items()}
                 else:
-                    generated_ids = self.model.generate(
-                        inputs["input_features"],
-                        max_length=448
-                    )
-            
-            # Decode results
-            transcriptions = self.processor.batch_decode(
-                generated_ids, 
-                skip_special_tokens=True
-            )
-            
-            # Map results back to original order
-            results = [{"text": ""} for _ in audio_segments]
-            for i, transcription in zip(indices, transcriptions):
-                results[i] = {"text": transcription.strip()}
+                    inputs = {k: v.to(self.torch_dtype if 'input_features' in k else v.dtype) 
+                             for k, v in inputs.items()}
+                
+                # Generate transcription
+                with torch.no_grad():
+                    if return_timestamps:
+                        generated_ids = self.model.generate(
+                            inputs["input_features"],
+                            return_timestamps=True,
+                            max_length=448
+                        )
+                    else:
+                        generated_ids = self.model.generate(
+                            inputs["input_features"],
+                            max_length=448
+                        )
+                
+                # Decode
+                transcription = self.processor.batch_decode(generated_ids, skip_special_tokens=True)
+                results.append({"text": transcription[0] if transcription else ""})
+                
+                # Clear memory
+                del inputs, generated_ids
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
             
             return results
             
         except Exception as e:
             print(f"Batch transcription error: {e}")
+            # Return empty results for all segments in case of error
             return [{"text": ""} for _ in audio_segments]
     
-    def transcribe_segments(self, segments, progress_callback=None):
+    def transcribe_segments(self, segments, batch_size=8, progress_callback=None):
         """
-        Transcribe a list of segments with batch processing.
+        Transcribe multiple segments with batch processing.
         
         Args:
-            segments (list): List of segment dictionaries with audio paths and timing
-            progress_callback (callable, optional): Progress callback function
+            segments (list): List of segment dictionaries
+            batch_size (int): Number of segments to process at once
+            progress_callback (callable): Progress callback function
             
         Returns:
             list: List of transcription results
         """
-        print(f"Transcribing {len(segments)} segments with {self.model_name}")
-        
         results = []
-        total_batches = (len(segments) + self.batch_size - 1) // self.batch_size
+        total_batches = (len(segments) + batch_size - 1) // batch_size
         
-        for batch_idx in range(0, len(segments), self.batch_size):
-            batch_segments = segments[batch_idx:batch_idx + self.batch_size]
-            batch_num = batch_idx // self.batch_size + 1
+        for batch_num in range(total_batches):
+            start_idx = batch_num * batch_size
+            end_idx = min(start_idx + batch_size, len(segments))
+            batch_segments = segments[start_idx:end_idx]
             
-            print(f"   Processing batch {batch_num}/{total_batches}")
+            print(f"   Processing batch {batch_num + 1}/{total_batches}")
             
             # Load audio for this batch
             audio_batch = []
@@ -246,86 +250,58 @@ class WhisperTranscriber:
             
             # Progress callback
             if progress_callback:
-                progress_callback(batch_num, total_batches)
+                progress_callback(batch_num + 1, total_batches)
             
-            # Clear memory (GPU or CPU)
+            # Clear memory
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
             else:
-                # For CPU, force garbage collection
                 import gc
                 gc.collect()
         
         return results
 
 
-def transcribe_with_both_models(segments, fine_tuned_model_path, batch_size=32, 
+def transcribe_with_both_models(segments, fine_tuned_model_path, batch_size=8, 
                                num_workers=1, progress_callback=None):
     """
-    Transcribe segments with both Whisper Large V3 and fine-tuned model.
+    Transcribe segments with both standard and fine-tuned Whisper models.
     
     Args:
         segments (list): List of segment dictionaries
         fine_tuned_model_path (str): Path to fine-tuned model
         batch_size (int): Batch size for processing
-        num_workers (int): Number of GPU workers (for multi-GPU setups)
-        progress_callback (callable, optional): Progress callback
-        
+        num_workers (int): Number of worker processes (not used in this implementation)
+        progress_callback (callable): Progress callback function
+    
     Returns:
-        tuple: (large_v3_results, fine_tuned_results)
+        list: Segments with transcription results added
     """
-    print(f"Starting transcription with both models")
+    if not segments:
+        return []
+    
+    print("Starting transcription with both models")
     print(f"   {len(segments)} segments, batch size {batch_size}")
     
     # Initialize transcribers
-    large_v3_transcriber = WhisperTranscriber(
-        model_path=None,  # Uses openai/whisper-large-v3
-        batch_size=batch_size
-    )
+    standard_transcriber = WhisperTranscriber("openai/whisper-large-v3")
+    fine_tuned_transcriber = WhisperTranscriber(fine_tuned_model_path)
     
-    fine_tuned_transcriber = WhisperTranscriber(
-        model_path=fine_tuned_model_path,
-        batch_size=batch_size
-    )
-    
-    # Transcribe with Large V3
+    # Transcribe with standard model
     print("\nTranscribing with Whisper Large V3...")
-    large_v3_results = large_v3_transcriber.transcribe_segments(
-        segments, 
-        progress_callback
+    print(f"Transcribing {len(segments)} segments with openai/whisper-large-v3")
+    standard_results = standard_transcriber.transcribe_segments(
+        segments, batch_size=batch_size, progress_callback=progress_callback
     )
-    
-    # Clear memory before loading second model
-    del large_v3_transcriber
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-    else:
-        import gc
-        gc.collect()
     
     # Transcribe with fine-tuned model
-    print("\nTranscribing with fine-tuned model...")
+    print(f"\nTranscribing with fine-tuned model...")
+    print(f"Transcribing {len(segments)} segments with {fine_tuned_model_path}")
     fine_tuned_results = fine_tuned_transcriber.transcribe_segments(
-        segments,
-        progress_callback
+        segments, batch_size=batch_size, progress_callback=progress_callback
     )
-    
-    # Cleanup
-    del fine_tuned_transcriber
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-    else:
-        import gc
-        gc.collect()
     
     print("Transcription completed for both models")
-    return large_v3_results, fine_tuned_results
-
-
-def process_segments_batch_parallel(segments_batch, fine_tuned_model_path, batch_size):
-    """Worker function for parallel processing of segment batches."""
-    return transcribe_with_both_models(
-        segments_batch, 
-        fine_tuned_model_path, 
-        batch_size
-    )
+    
+    # Return separate results as expected by main script
+    return standard_results, fine_tuned_results

@@ -623,8 +623,66 @@ def train_model(trainer, resume_from_checkpoint=None):
     print("Training completed!")
 
 # ============================================================================
-# Configuration Summary
+# Configuration Summary and README Generation
 # ============================================================================
+
+def create_training_readme(args):
+    """Create a README.md file in the output directory with training configuration."""
+    import os
+    
+    # Ensure output directory exists
+    os.makedirs(args.output_dir, exist_ok=True)
+    
+    # Extract model name from output directory for title
+    model_name = os.path.basename(args.output_dir)
+    
+    # Create README content
+    readme_content = f"""# Whisper Large-v3 Fine-tuning - {model_name}
+
+## Training Configuration
+
+```bash
+python scripts/finetune_whisper_from_LogMEL.py \\
+    --dataset_path "{args.dataset_path}" \\
+    --output_dir "{args.output_dir}" \\
+    --model_size "{args.model_size}" \\
+    --num_gpus {args.num_gpus} \\
+    --dataloader_num_workers {args.dataloader_num_workers} \\
+    --per_device_train_batch_size {args.per_device_train_batch_size} \\
+    --gradient_accumulation_steps {args.gradient_accumulation_steps} \\
+    --learning_rate {args.learning_rate} \\
+    --max_steps {args.max_steps} \\
+    --warmup_steps {args.warmup_steps} \\
+    --save_steps {args.save_steps} \\
+    --eval_steps {args.eval_steps} \\
+    --logging_steps {args.logging_steps} \\
+    --max_grad_norm {args.max_grad_norm} \\
+    --weight_decay {args.weight_decay} \\
+    --lr_scheduler_type "{args.lr_scheduler_type}" \\"""
+    
+    # Add optional arguments that might be present
+    if hasattr(args, 'bf16') and args.bf16:
+        readme_content += "\n    --bf16 \\"
+    if hasattr(args, 'fp16') and args.fp16:
+        readme_content += "\n    --fp16 \\"
+    if hasattr(args, 'report_to') and args.report_to:
+        readme_content += f'\n    --report_to "{args.report_to}" \\'
+    if hasattr(args, 'early_stopping_patience') and args.early_stopping_patience > 0:
+        readme_content += f"\n    --early_stopping_patience {args.early_stopping_patience} \\"
+        readme_content += f"\n    --early_stopping_threshold {args.early_stopping_threshold} \\"
+    if hasattr(args, 'resume_from_checkpoint') and args.resume_from_checkpoint:
+        readme_content += f'\n    --resume_from_checkpoint "{args.resume_from_checkpoint}" \\'
+    
+    # Remove the trailing backslash from the last line
+    readme_content = readme_content.rstrip(" \\")
+    readme_content += "\n```\n"
+    
+    # Write README file
+    readme_path = os.path.join(args.output_dir, "README.md")
+    with open(readme_path, "w", encoding="utf-8") as f:
+        f.write(readme_content)
+    
+    print(f"Created training configuration README: {readme_path}")
 
 def print_training_config(args, resume_checkpoint_path=None):
     """Print training configuration summary."""
@@ -745,6 +803,9 @@ def main():
     
     # Step 6: Create training arguments
     training_args = create_training_arguments(args)
+    
+    # Step 6.5: Create README.md with training configuration
+    create_training_readme(args)
     
     # Step 7: Create trainer
     trainer = create_trainer(

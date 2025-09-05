@@ -4,6 +4,7 @@
 #SBATCH --error=logs/whisper_large_v3_training_%j.err
 #SBATCH --partition=aisc
 #SBATCH --account=aisc                      # AISC account for H100 access
+#SBATCH --qos=aisc
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=24                  # Increased for 20 dataloader workers
@@ -29,18 +30,20 @@ echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
 
 # Configuration for large-v3 training
 DATASET_PATH="data/LangAgeLogMelSpec"
-OUTPUT_DIR="FrisperWhisper/largeV3.1"
+OUTPUT_DIR="FrisperWhisper/largeV3.2"
 MODEL_SIZE="large-v3"
 NUM_GPUS=4
 DATALOADER_WORKERS=20
 TRAIN_BATCH_SIZE=1                    # Conservative for large-v3
 GRADIENT_ACCUMULATION=16              # Effective batch size = 1×4×16 = 64
-LEARNING_RATE=3e-6                    # Conservative for stability
+LEARNING_RATE=1.5e-5                  # Increased from 3e-6 for better convergence
 MAX_STEPS=10000                       # Sufficient for convergence
-WARMUP_STEPS=1000                     # 7.5% of max steps
+WARMUP_STEPS=1000                     # 10% of max steps
 SAVE_STEPS=500
 EVAL_STEPS=500
 LOGGING_STEPS=50
+WEIGHT_DECAY=0.05                     # Increased from 0.02 for better regularization
+LR_SCHEDULER_TYPE="linear"            # Changed from cosine for more gradual decay
 
 echo "========================================="
 echo "Training Configuration:"
@@ -73,8 +76,8 @@ TRAIN_ARGS=(
     --eval_steps "$EVAL_STEPS"
     --logging_steps "$LOGGING_STEPS"
     --max_grad_norm 0.5
-    --weight_decay 0.02
-    --lr_scheduler_type "cosine"
+    --weight_decay "$WEIGHT_DECAY"
+    --lr_scheduler_type "$LR_SCHEDULER_TYPE"
     --bf16
     --report_to "tensorboard"
 )

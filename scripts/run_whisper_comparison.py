@@ -39,7 +39,7 @@ def parse_arguments():
         "--output", "-o",
         type=str,
         required=True,
-        help="Path to output CSV file"
+        help="Path to output directory (e.g., results/largeV3.1)"
     )
     parser.add_argument(
         "--fine_tuned_model",
@@ -113,6 +113,97 @@ def load_intermediate_results(filepath):
     print(f"Loading intermediate results from {filepath}")
     with open(filepath, 'r', encoding='utf-8') as f:
         return json.load(f)
+
+
+def create_readme(output_dir, args, start_time):
+    """Create README.md with execution details."""
+    readme_path = output_dir / "README.md"
+    
+    from datetime import datetime
+    
+    content = f"""# Whisper Model Comparison Results
+
+## Execution Details
+
+**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  
+**Script:** run_whisper_comparison_pipeline.py  
+**Duration:** Started at {datetime.fromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S')}  
+
+## Command Line Arguments
+
+```bash
+python scripts/run_whisper_comparison_pipeline.py \\
+  --input "{args.input}" \\
+  --output "{args.output}" \\
+  --fine_tuned_model "{args.fine_tuned_model}" \\"""
+
+    if args.checkpoint:
+        content += f"""
+  --checkpoint "{args.checkpoint}" \\"""
+    
+    content += f"""
+  --cpus {args.cpus} \\
+  --gpus {args.gpus} \\
+  --batch_size {args.batch_size} \\
+  --transcription_batch_processes {args.transcription_batch_processes} \\
+  --steps "{args.steps}"\\"""
+
+    if args.file_limit:
+        content += f"""
+  --file_limit {args.file_limit} \\"""
+    
+    if args.resume_from_transcriptions:
+        content += f"""
+  --resume_from_transcriptions "{args.resume_from_transcriptions}" \\"""
+    
+    content = content.rstrip(" \\")  # Remove trailing backslash
+    
+    content += f"""
+```
+
+## Configuration Summary
+
+- **Input Directory:** `{args.input}`
+- **Output Directory:** `{args.output}`
+- **Fine-tuned Model:** `{args.fine_tuned_model}`
+- **Checkpoint:** `{args.checkpoint if args.checkpoint else 'final model'}`
+- **Processing:** {args.cpus} CPUs, {args.gpus} GPUs
+- **Batch Size:** {args.batch_size}
+- **Transcription Processes:** {args.transcription_batch_processes}
+- **Pipeline Steps:** {args.steps}
+{f"- **File Limit:** {args.file_limit}" if args.file_limit else ""}
+{f"- **Resume From:** `{args.resume_from_transcriptions}`" if args.resume_from_transcriptions else ""}
+
+## Output Files
+
+- **Main Results:** `whisper_comparison_results.csv`
+- **Sample Results:** `whisper_comparison_results_sample.csv` (first 100 rows)
+- **Intermediate Files:** `whisper_comparison_results_intermediate/`
+  - `segments_with_metadata.json`
+  - `segments_with_transcriptions.json`
+
+## Pipeline Steps
+
+1. **Metadata Extraction:** Extract audio segments and speaker information
+2. **Transcription:** Transcribe with both Whisper Large V3 and fine-tuned model
+3. **Metrics Calculation:** Calculate WER, CER, and BLEU scores
+4. **Results Export:** Create comprehensive CSV with all comparisons
+
+## Metrics Included
+
+- **WER (Word Error Rate):** Lower is better
+- **CER (Character Error Rate):** Lower is better  
+- **BLEU Score:** Higher is better
+
+Comparisons are made between:
+- Large V3 vs Original transcripts
+- Fine-tuned vs Original transcripts
+- Large V3 vs Fine-tuned transcripts
+"""
+    
+    print(f"Creating README.md: {readme_path}")
+    with open(readme_path, 'w', encoding='utf-8') as f:
+        f.write(content)
 
 
 def progress_callback(current, total):
@@ -270,7 +361,7 @@ def main():
     print("WHISPER MODEL COMPARISON PIPELINE")
     print("="*60)
     print(f"Input directory: {args.input}")
-    print(f"Output file: {args.output}")
+    print(f"Output directory: {args.output}")
     print(f"Fine-tuned model: {args.fine_tuned_model}")
     if args.checkpoint:
         print(f"Checkpoint: {args.checkpoint}")
@@ -306,16 +397,22 @@ def main():
             sys.exit(1)
     
     # Create output directory
-    output_dir = Path(args.output).parent
+    output_dir = Path(args.output)
     output_dir.mkdir(parents=True, exist_ok=True)
     
+    # Define output file paths
+    csv_file = output_dir / "whisper_comparison_results.csv"
+    sample_csv_file = output_dir / "whisper_comparison_results_sample.csv"
+    
     # Define intermediate file paths
-    base_name = Path(args.output).stem
-    intermediate_dir = output_dir / f"{base_name}_intermediate"
+    intermediate_dir = output_dir / "whisper_comparison_results_intermediate"
     intermediate_dir.mkdir(exist_ok=True)
     
     segments_file = intermediate_dir / "segments_with_metadata.json"
     transcriptions_file = intermediate_dir / "segments_with_transcriptions.json"
+    
+    # Create README.md with execution details
+    create_readme(output_dir, args, start_time)
     
     try:
         # Step 1: Metadata extraction
@@ -356,13 +453,12 @@ def main():
         if args.steps in ["all", "metrics"]:
             df = create_final_dataframe(segments)
             
-            print(f"\nSaving final results to {args.output}")
-            df.to_csv(args.output, index=False, encoding='utf-8')
+            print(f"\nSaving final results to {csv_file}")
+            df.to_csv(csv_file, index=False, encoding='utf-8')
             
             # Save a sample for quick inspection
-            sample_file = output_dir / f"{base_name}_sample.csv"
-            df.head(100).to_csv(sample_file, index=False, encoding='utf-8')
-            print(f"Sample (100 rows) saved to {sample_file}")
+            df.head(100).to_csv(sample_csv_file, index=False, encoding='utf-8')
+            print(f"Sample (100 rows) saved to {sample_csv_file}")
         
         # Final statistics
         end_time = time.time()
@@ -374,8 +470,10 @@ def main():
         print(f"Total time: {duration/60:.1f} minutes")
         if df is not None:
             print(f"Total segments processed: {len(df)}")
-            print(f"Final output: {args.output}")
+            print(f"Main results: {csv_file}")
+            print(f"Sample results: {sample_csv_file}")
         print(f"Intermediate files: {intermediate_dir}")
+        print(f"Documentation: {output_dir / 'README.md'}")
         
     except KeyboardInterrupt:
         print(f"\nPipeline interrupted by user")

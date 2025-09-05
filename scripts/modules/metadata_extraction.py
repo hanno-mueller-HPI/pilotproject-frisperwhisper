@@ -233,7 +233,11 @@ def extract_segments_from_folder(data_dir, file_limit=None):
                     'dialect': speaker_info.get('dialect', ''),
                     'accent': speaker_info.get('accent', '')
                 })
-                all_segments.append(segment)
+                # Filter out segments with zero or negative duration
+                if segment.get('duration', 0) > 0:
+                    all_segments.append(segment)
+                else:
+                    print(f"   Skipping segment with duration {segment.get('duration', 0):.3f}s in {filename}")
             
             processed_files += 1
             if processed_files % 10 == 0:
