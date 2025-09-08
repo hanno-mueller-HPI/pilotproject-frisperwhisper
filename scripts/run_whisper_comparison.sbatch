@@ -46,12 +46,12 @@ mkdir -p logs
 
 # Configuration
 INPUT_DIR="data/LangAge16kHz"
-FINE_TUNED_MODEL="./FrisperWhisper/largeV3.1"
-CHECKPOINT="checkpoint-5500"  # Use checkpoint-5500
+FINE_TUNED_MODEL="./FrisperWhisper/largeV3.2"
+CHECKPOINT="checkpoint-2000"  # Use checkpoint-2000
 
 # Automatically generate output directory name based on model and checkpoint
-MODEL_NAME="largeV3.1"
-CHECKPOINT_NUM="5500"
+MODEL_NAME="largeV3.2"
+CHECKPOINT_NUM="2000"
 OUTPUT_DIR="results/${MODEL_NAME}-check${CHECKPOINT_NUM}"
 
 # Processing configuration
@@ -76,7 +76,7 @@ echo "Batch size: $BATCH_SIZE"
 echo "Transcription processes: $TRANSCRIPTION_PROCESSES"
 echo "========================================="
 
-# Build command arguments for run_whisper_comparison_pipeline.py
+# Build command arguments for run_whisper_comparison.py
 COMPARISON_ARGS=(
     --input "$INPUT_DIR"
     --output "$OUTPUT_DIR"
@@ -94,10 +94,10 @@ if [ -n "$CHECKPOINT" ]; then
 fi
 
 echo "Starting Whisper model comparison pipeline..."
-echo "Command: python scripts/run_whisper_comparison_pipeline.py ${COMPARISON_ARGS[@]}"
+echo "Command: python scripts/run_whisper_comparison.py ${COMPARISON_ARGS[@]}"
 
 # Run the comparison pipeline
-python scripts/run_whisper_comparison_pipeline.py "${COMPARISON_ARGS[@]}"
+python scripts/run_whisper_comparison.py "${COMPARISON_ARGS[@]}"
 
 EXIT_CODE=$?
 

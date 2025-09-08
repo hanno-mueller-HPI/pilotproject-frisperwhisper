@@ -299,19 +299,32 @@ def run_metrics_calculation(segments, args):
 
 
 def create_final_dataframe(segments):
-    """Create final DataFrame with all results."""
+    """Create final DataFrame with all results including individual marker columns."""
     print("\n" + "="*60)
     print("CREATING FINAL DATAFRAME")
     print("="*60)
     
-    # Define columns in desired order
-    columns = [
+    # Define marker categories
+    interjection_markers = ['ah', 'bah', 'beh', 'ben', 'chh', 'eh', 'euh', 'ha', 'hé', 
+                           'hein', 'hop', 'hum', 'm-hm', 'mmh', 'mm', 'oh', 'ouf', 'pff', 'youh']
+    
+    parenthetical_markers = ['(bru)', '(bou)', '(exp)', '(ges)', '(ins)', '(ono)', '(pau)', 
+                            '(rac)', '(rir)', '(tou)', '(tss)', '(sou)', '(buzz)']
+    
+    special_markers = ['XXX']  # For XX, XXX, XXXX patterns
+    
+    all_markers = interjection_markers + parenthetical_markers + special_markers
+    
+    # Define base columns in desired order
+    base_columns = [
         'filename',
         'speaker_id', 
         'interview_number',
+        'startTime',
+        'endTime',
+        'interval',
         'gender',
         'dialect',
-        'markers',
         'segment_duration',
         'transcript_original',
         'transcript_large_v3',
@@ -327,19 +340,59 @@ def create_final_dataframe(segments):
         'BLEU_large_v3_vs_fine_tuned'
     ]
     
+    # Final column order: base columns + marker columns
+    columns = base_columns + all_markers
+    
     # Convert to DataFrame
     df_data = []
     for segment in segments:
         row = {}
-        for col in columns:
+        
+        # Fill base columns
+        for col in base_columns:
             if col == 'segment_duration':
                 row[col] = segment.get('duration', 0.0)
-            elif col == 'markers':
-                # Convert markers list to string
-                markers = segment.get('markers', [])
-                row[col] = '; '.join(markers) if markers else ''
+            elif col == 'startTime':
+                row[col] = segment.get('start_time', 0.0)
+            elif col == 'endTime':
+                row[col] = segment.get('end_time', 0.0)
+            elif col == 'interval':
+                row[col] = segment.get('interval', 0)
             else:
                 row[col] = segment.get(col, '')
+        
+        # Initialize all marker columns to 0
+        for marker in all_markers:
+            row[marker] = 0
+        
+        # Fill marker columns based on extracted markers
+        markers_list = segment.get('markers', [])
+        transcript_original = segment.get('text', '')
+        
+        # Convert markers list to string for pattern matching
+        markers_str = '; '.join(markers_list) if markers_list else ''
+        
+        # Check interjection markers (look in both markers and original text)
+        for marker in interjection_markers:
+            # Check in extracted markers (case-insensitive)
+            found_in_markers = marker.lower() in markers_str.lower()
+            
+            # Also check in original text as word boundaries (case-insensitive)
+            import re
+            found_in_text = bool(re.search(r'\b' + re.escape(marker) + r'\b', transcript_original, re.IGNORECASE))
+            
+            if found_in_markers or found_in_text:
+                row[marker] = 1
+        
+        # Check parenthetical markers (only in extracted markers)
+        for marker in parenthetical_markers:
+            if marker in markers_str:
+                row[marker] = 1
+        
+        # Check for XXX pattern (XX or more X's in original transcript)
+        if 'XX' in transcript_original:
+            row['XXX'] = 1
+        
         df_data.append(row)
     
     df = pd.DataFrame(df_data, columns=columns)
@@ -347,6 +400,7 @@ def create_final_dataframe(segments):
     print(f"DataFrame created:")
     print(f"   Rows: {len(df)}")
     print(f"   Columns: {len(df.columns)}")
+    print(f"   Marker columns added: {len(all_markers)}")
     
     return df
 

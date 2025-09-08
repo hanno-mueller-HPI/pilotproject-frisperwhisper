@@ -128,7 +128,8 @@ class TextGrid:
                         'end_time': interval['xmax'],
                         'duration': interval['xmax'] - interval['xmin'],
                         'text': interval['text'],
-                        'segment_id': f"{speaker}_{idx}"
+                        'segment_id': f"{speaker}_{idx}",
+                        'interval': idx  # Add interval number
                     }
                     segments.append(segment)
         
