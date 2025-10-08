@@ -17,7 +17,7 @@ module load CUDA/11.8
 module load Python/3.11.3
 
 # Activate virtual environment
-cd /sc/home/hanno.mueller/TTS-LangAge
+cd /sc/home/hanno.mueller/pilotproject-frisperwhisper
 source .venv/bin/activate
 
 # Set CUDA environment variables for 4 GPUs

@@ -3514,7 +3514,7 @@ wheels = [
 ]
 
 [[package]]
-name = "tts-langage"
+name = "pilotproject-frisperwhisper"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
@@ -3608,7 +3608,7 @@ requires-dist = [
     { name = "torchcodec" },
     { name = "tqdm" },
     { name = "transformers" },
-    { name = "tts-langage", extras = ["dev", "gpu", "metrics"], marker = "extra == 'all'" },
+    { name = "pilotproject-frisperwhisper", extras = ["dev", "gpu", "metrics"], marker = "extra == 'all'" },
     { name = "wandb", marker = "extra == 'metrics'" },
 ]
 provides-extras = ["dev", "gpu", "metrics", "all"]

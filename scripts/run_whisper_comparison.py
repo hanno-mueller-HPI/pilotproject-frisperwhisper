@@ -167,12 +167,16 @@ python scripts/run_whisper_comparison_pipeline.py \\
 - **Output Directory:** `{args.output}`
 - **Fine-tuned Model:** `{args.fine_tuned_model}`
 - **Checkpoint:** `{args.checkpoint if args.checkpoint else 'final model'}`
-- **Processing:** {args.cpus} CPUs, {args.gpus} GPUs
+- **Processing:** {args.cpus} CPUs, {args.gpus} GPUs{' (Multi-GPU Support)' if args.gpus > 1 else ''}
 - **Batch Size:** {args.batch_size}
 - **Transcription Processes:** {args.transcription_batch_processes}
 - **Pipeline Steps:** {args.steps}
 {f"- **File Limit:** {args.file_limit}" if args.file_limit else ""}
 {f"- **Resume From:** `{args.resume_from_transcriptions}`" if args.resume_from_transcriptions else ""}
+
+## Multi-GPU Support
+
+{f'This pipeline includes multi-GPU parallel processing support. With {args.gpus} GPUs configured, the workload is automatically distributed across all available GPUs for faster processing.' if args.gpus > 1 else 'Single-GPU processing mode.'}
 
 ## Output Files
 
@@ -270,7 +274,8 @@ def run_transcription(segments, args):
         fine_tuned_model_path,
         batch_size=args.batch_size,
         num_workers=args.transcription_batch_processes,
-        progress_callback=progress_callback
+        progress_callback=progress_callback,
+        num_gpus=args.gpus
     )
     
     # Add transcriptions to segments

@@ -342,4 +342,6 @@ def get_speaker_metadata(data_dir, filename):
     if os.path.exists(trs_path):
         return parse_trs_file(trs_path)
     
+    # No TRS file found - return empty mapping
+    # Gender and dialect information will not be available
     return {}

@@ -31,6 +31,10 @@ def create_speaker_mapping(data_dir):
     # Get all TRS files
     trs_files = [f for f in os.listdir(data_dir) if f.endswith('.trs')]
     
+    if not trs_files:
+        print("   No TRS files found - using TextGrid-only mode")
+        return create_speaker_mapping_from_textgrids(data_dir)
+    
     for trs_file in trs_files:
         try:
             tree = ET.parse(os.path.join(data_dir, trs_file))
@@ -95,6 +99,61 @@ def create_speaker_mapping(data_dir):
     return speaker_mapping
 
 
+def create_speaker_mapping_from_textgrids(data_dir):
+    """
+    Create basic speaker mapping from TextGrid files when TRS files are not available.
+    
+    Args:
+        data_dir (str): Path to directory containing TextGrid files
+        
+    Returns:
+        dict: Basic mapping from filename_speaker to speaker info
+    """
+    print("   Creating basic speaker mapping from TextGrid files...")
+    
+    import glob
+    
+    # Find all TextGrid files
+    textgrid_files = glob.glob(os.path.join(data_dir, "*.TextGrid"))
+    
+    speaker_mapping = {}
+    
+    for textgrid_path in textgrid_files:
+        filename = os.path.splitext(os.path.basename(textgrid_path))[0]
+        
+        try:
+            # Simple TextGrid parsing to extract speaker names
+            with open(textgrid_path, 'r', encoding='utf-8', errors='replace') as f:
+                content = f.read()
+            
+            # Extract speaker names from TextGrid structure
+            import re
+            speaker_names = set()
+            
+            # Look for tier names (speakers)
+            name_matches = re.findall(r'name\s*=\s*"([^"]+)"', content)
+            for name in name_matches:
+                if name and name not in ['', ' ']:
+                    speaker_names.add(name)
+            
+            # Create mapping for each speaker in this file
+            for speaker_name in speaker_names:
+                key = f"{filename}_{speaker_name}"
+                speaker_mapping[key] = {
+                    'speaker_id': speaker_name,
+                    'interview_number': filename,
+                    'gender': "",  # Not available without TRS
+                    'dialect': "",  # Not available without TRS
+                    'is_multi_interview': False,  # Cannot determine without TRS
+                }
+                
+        except Exception as e:
+            print(f"   Warning: Could not parse TextGrid {filename}: {e}")
+            continue
+    
+    return speaker_mapping
+
+
 def get_speaker_info(speaker_mapping, filename, speaker_name):
     """
     Get consistent speaker information for a given filename and speaker.
@@ -142,3 +201,5 @@ def print_speaker_statistics(speaker_mapping):
             print(f"   {speaker_id}: {len(appearances)} appearances in {sorted(set(interview_numbers))}")
         if len(multi_interview) > 5:
             print(f"   ... and {len(multi_interview) - 5} more")
+    else:
+        print(f"\nNo multi-interview speakers detected (this is normal when TRS files are not available)")

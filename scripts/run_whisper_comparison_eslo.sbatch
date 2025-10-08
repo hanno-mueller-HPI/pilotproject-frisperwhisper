@@ -1,20 +1,20 @@
 #!/bin/bash
-#SBATCH --job-name=refinedCUDA1GPU
-#SBATCH --account=aisc                      # AISC account for GPU access
+#SBATCH --job-name=whisper_eslo
+#SBATCH --account=aisc-staff                      # AISC account for GPU access
 #SBATCH --partition=aisc                    # Partition with GPUs
-#SBATCH --qos=aisc                          # QoS setting for AISC
-#SBATCH --output=logs/whisper_comparison_%j.out
-#SBATCH --error=logs/whisper_comparison_%j.err
+#SBATCH --output=logs/whisper_eslo_%j.out
+#SBATCH --error=logs/whisper_eslo_%j.err
 #SBATCH --time=120:00:00                    # (5 days)
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=56                 # 112 CPUs
-#SBATCH --gres=gpu:1                        # 4 GPUs
+#SBATCH --cpus-per-task=56                 # 56 CPUs
+#SBATCH --gres=gpu:2                        # 2 GPUs
 #SBATCH --mem=600G                          # 600GB memory
 
-# Skip module loading - use virtual environment directly
-# module load CUDA/11.8
-# module load Python/3.11.3
+# Parse command line arguments
+INPUT_DIR=${1:-"data/sampleESLO30-39"}
+OUTPUT_DIR=${2:-"results/ESLO30-39"}
+
 echo "Using virtual environment CUDA setup directly"
 
 echo "=== SLURM Job Information ==="
@@ -38,26 +38,20 @@ source .venv/bin/activate
 echo "Python path: $(which python)"
 echo "Working directory: $(pwd)"
 
-# Set CUDA environment variables for 4 GPUs
-export CUDA_VISIBLE_DEVICES=0,1,2,3
+# Set CUDA environment variables for 2 GPUs
+export CUDA_VISIBLE_DEVICES=0,1
 echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
 
 # Create logs directory if it doesn't exist
 mkdir -p logs
 
 # Configuration
-INPUT_DIR="data/LangAge16kHz"
 FINE_TUNED_MODEL="./FrisperWhisper/largeV3.2"
 CHECKPOINT="checkpoint-2000"  # Use checkpoint-2000
 
-# Automatically generate output directory name based on model and checkpoint
-MODEL_NAME="largeV3.2"
-CHECKPOINT_NUM="2000"
-OUTPUT_DIR="results/${MODEL_NAME}-check${CHECKPOINT_NUM}-refined1GPU"
-
 # Processing configuration
 NUM_CPUS=56
-NUM_GPUS=1
+NUM_GPUS=2
 BATCH_SIZE=64                           # Batch size for transcription
 TRANSCRIPTION_PROCESSES=8               # Number of batch processes for transcription
 
@@ -76,6 +70,12 @@ echo "GPUs: $NUM_GPUS"
 echo "Batch size: $BATCH_SIZE"
 echo "Transcription processes: $TRANSCRIPTION_PROCESSES"
 echo "========================================="
+
+# Validate input directory exists
+if [ ! -d "$INPUT_DIR" ]; then
+    echo "ERROR: Input directory '$INPUT_DIR' does not exist!"
+    exit 1
+fi
 
 # Build command arguments for run_whisper_comparison.py
 COMPARISON_ARGS=(

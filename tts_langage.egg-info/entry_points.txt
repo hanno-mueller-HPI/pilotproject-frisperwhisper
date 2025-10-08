@@ -1,4 +1,0 @@
-[console_scripts]
-finetune-whisper-gpu = scripts.finetune_whisper_gpu:main
-textgrids2dataset = scripts.TextGrids2Dataset:main
-textgrids2dataset-debug = scripts.TextGrids2DatasetDebug:main

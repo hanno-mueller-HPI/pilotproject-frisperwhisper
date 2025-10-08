@@ -21,7 +21,7 @@ echo "Memory allocated: $SLURM_MEM_PER_NODE MB"
 echo "=============================="
 
 # Navigate to the project directory
-cd /sc/home/hanno.mueller/TTS-LangAge
+cd /sc/home/hanno.mueller/pilotproject-frisperwhisper
 
 # Activate virtual environment
 echo "Activating virtual environment..."
