@@ -22,6 +22,65 @@ from transcription import transcribe_with_both_models
 from metrics_calculation import calculate_metrics_for_segments, print_metrics_summary
 
 
+def load_dataset_splits(dataset_path):
+    """
+    Load dataset and create a lookup dictionary for train/test membership.
+    
+    Args:
+        dataset_path (str): Path to HuggingFace dataset directory
+        
+    Returns:
+        dict: Lookup dictionary with keys like 'filename_speaker_interval' mapped to {'train': 0/1, 'test': 0/1}
+    """
+    if not dataset_path or not os.path.exists(dataset_path):
+        return None
+    
+    try:
+        from datasets import load_from_disk
+        
+        print(f"\nLoading dataset from {dataset_path}...")
+        dataset_dict = load_from_disk(dataset_path)
+        
+        lookup = {}
+        
+        # Process train split
+        if 'train' in dataset_dict:
+            print(f"   Processing train split ({len(dataset_dict['train'])} samples)...")
+            for item in dataset_dict['train']:
+                # Create a unique key from filename, speaker, and interval
+                # The dataset should have these fields from the TextGrid processing
+                filename = item.get('filename', '')
+                speaker = item.get('speaker', '')
+                interval = item.get('interval', 0)
+                
+                key = f"{filename}_{speaker}_{interval}"
+                lookup[key] = {'train': 1, 'test': 0}
+        
+        # Process test split
+        if 'test' in dataset_dict:
+            print(f"   Processing test split ({len(dataset_dict['test'])} samples)...")
+            for item in dataset_dict['test']:
+                filename = item.get('filename', '')
+                speaker = item.get('speaker', '')
+                interval = item.get('interval', 0)
+                
+                key = f"{filename}_{speaker}_{interval}"
+                if key in lookup:
+                    # This shouldn't happen, but handle it
+                    lookup[key] = {'train': 1, 'test': 1}  # In both?!
+                else:
+                    lookup[key] = {'train': 0, 'test': 1}
+        
+        print(f"   Dataset lookup created: {len(lookup)} entries")
+        return lookup
+        
+    except Exception as e:
+        print(f"Warning: Could not load dataset from {dataset_path}: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
 def parse_arguments():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
@@ -51,6 +110,11 @@ def parse_arguments():
         "--checkpoint",
         type=str,
         help="Specific checkpoint to use (e.g., 'checkpoint-6000'). If not specified, uses the final model."
+    )
+    parser.add_argument(
+        "--dataset_path",
+        type=str,
+        help="Path to the HuggingFace dataset (optional). If provided, adds 'train' and 'test' columns to output CSV."
     )
     
     # Processing arguments
@@ -303,8 +367,16 @@ def run_metrics_calculation(segments, args):
     return segments_with_metrics
 
 
-def create_final_dataframe(segments):
-    """Create final DataFrame with all results including individual marker columns."""
+def create_final_dataframe(segments, dataset_lookup=None):
+    """Create final DataFrame with all results including individual marker columns and train/test indicators.
+    
+    Args:
+        segments (list): List of segment dictionaries with transcriptions and metrics
+        dataset_lookup (dict, optional): Lookup dictionary for train/test membership
+        
+    Returns:
+        pd.DataFrame: Final dataframe with all columns
+    """
     print("\n" + "="*60)
     print("CREATING FINAL DATAFRAME")
     print("="*60)
@@ -331,6 +403,8 @@ def create_final_dataframe(segments):
         'gender',
         'dialect',
         'segment_duration',
+        'train',
+        'test',
         'transcript_original',
         'transcript_large_v3',
         'transcript_fine_tuned',
@@ -363,6 +437,20 @@ def create_final_dataframe(segments):
                 row[col] = segment.get('end_time', 0.0)
             elif col == 'interval':
                 row[col] = segment.get('interval', 0)
+            elif col == 'train' or col == 'test':
+                # Determine train/test membership from dataset lookup
+                if dataset_lookup is not None:
+                    filename = segment.get('filename', '')
+                    speaker = segment.get('speaker', '')
+                    interval = segment.get('interval', 0)
+                    key = f"{filename}_{speaker}_{interval}"
+                    
+                    if key in dataset_lookup:
+                        row[col] = dataset_lookup[key].get(col, 0)
+                    else:
+                        row[col] = 0  # Not in dataset
+                else:
+                    row[col] = 0  # No dataset provided
             else:
                 row[col] = segment.get(col, '')
         
@@ -473,6 +561,15 @@ def main():
     # Create README.md with execution details
     create_readme(output_dir, args, start_time)
     
+    # Load dataset for train/test membership (if provided)
+    dataset_lookup = None
+    if args.dataset_path:
+        dataset_lookup = load_dataset_splits(args.dataset_path)
+        if dataset_lookup:
+            print(f"✓ Dataset loaded successfully for train/test tracking")
+        else:
+            print(f"✗ Could not load dataset, train/test columns will be 0")
+    
     try:
         # Step 1: Metadata extraction
         if args.steps in ["all", "metadata"]:
@@ -510,7 +607,7 @@ def main():
         # Create final DataFrame and save
         df = None
         if args.steps in ["all", "metrics"]:
-            df = create_final_dataframe(segments)
+            df = create_final_dataframe(segments, dataset_lookup)
             
             print(f"\nSaving final results to {csv_file}")
             df.to_csv(csv_file, index=False, encoding='utf-8')

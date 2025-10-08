@@ -209,22 +209,135 @@ Das Skript unterstützt das Fortsetzen unterbrochener Trainings von gespeicherte
 - Falls der angegebene Checkpoint nicht existiert, startet das Training von vorne mit einer Warnung
 
 
-## Transkribieren mit Whisper
+## Transkribieren und Modellvergleich mit Whisper
 
-Das Skript `run_whisper_comparison_pipeline.py` ermöglicht einen systematischen Vergleich zwischen dem ursprünglichen Whisper Large V3 Modell und einem fine-tuned Modell. Es verarbeitet Audio-Segmente aus TextGrid-Dateien und berechnet verschiedene Metriken (WER, CER, BLEU) für die Bewertung der Transkriptionsqualität.
+Das Skript `run_whisper_comparison.py` ermöglicht einen systematischen Vergleich zwischen dem ursprünglichen Whisper Large V3 Modell und einem fine-tuned Modell. Es verarbeitet Audio-Segmente aus TextGrid-Dateien und berechnet verschiedene Metriken (WER, CER, BLEU) für die Bewertung der Transkriptionsqualität.
+
+### Pipeline-Schritte
+
+Das Skript führt folgende Schritte aus:
+
+1. **Metadaten-Extraktion**: Extrahiert Audio-Segmente und Sprecher-Informationen aus TextGrid-Dateien
+2. **Transkription**: Transkribiert mit beiden Modellen (Whisper Large V3 und Fine-tuned)
+3. **Metrik-Berechnung**: Berechnet WER, CER und BLEU-Scores für beide Modelle
+4. **CSV-Export**: Erstellt eine umfassende CSV-Datei mit allen Vergleichen
+
+### Verwendung
+
+**Basis-Kommando:**
 
 ```bash
-(.venv)$ python scripts/run_whisper_comparison_pipeline.py \
+(.venv)$ python scripts/run_whisper_comparison.py \
     --input data/LangAge16kHz \
-    --output data/csv/comparison_results.csv \
+    --output results/comparison_v1 \
     --fine_tuned_model FrisperWhisper/largeV3 \
     --checkpoint checkpoint-6000 \
     --cpus 32 \
     --gpus 4 \
     --batch_size 16 \
-    --transcription_batch_processes 1 \
+    --transcription_batch_processes 8 \
     --steps all
 ```
+
+**Mit Train/Test-Spalten:**
+
+Um die CSV mit Spalten zu erweitern, die anzeigen, ob ein Segment im Training oder Test-Set war, kann der Parameter `--dataset_path` verwendet werden:
+
+```bash
+(.venv)$ python scripts/run_whisper_comparison.py \
+    --input data/LangAge16kHz \
+    --output results/comparison_v1 \
+    --fine_tuned_model FrisperWhisper/largeV3 \
+    --checkpoint checkpoint-6000 \
+    --dataset_path data/LangAgeDataSet \
+    --cpus 32 \
+    --gpus 4 \
+    --batch_size 16 \
+    --transcription_batch_processes 8 \
+    --steps all
+```
+
+### Parameter
+
+- `--input`: Eingabeverzeichnis mit TextGrid- und Audio-Dateien (erforderlich)
+- `--output`: Ausgabeverzeichnis für Ergebnisse (erforderlich)
+- `--fine_tuned_model`: Pfad zum fine-tuned Whisper-Modell (erforderlich)
+- `--checkpoint`: Spezifischer Checkpoint (z.B. `checkpoint-6000`). Falls nicht angegeben, wird das finale Modell verwendet
+- `--dataset_path`: Pfad zum HuggingFace Dataset (optional). Fügt `train` und `test` Spalten zur CSV hinzu
+- `--cpus`: Anzahl CPU-Kerne (Standard: 8)
+- `--gpus`: Anzahl GPUs (Standard: 1). Multi-GPU wird unterstützt
+- `--batch_size`: Batch-Größe für Transkription (Standard: 32)
+- `--transcription_batch_processes`: Anzahl paralleler Batch-Prozesse (Standard: 4)
+- `--steps`: Pipeline-Schritte (`all`, `metadata`, `transcription`, `metrics`; Standard: `all`)
+- `--file_limit`: Dateien-Limit für Tests (optional)
+- `--resume_from_transcriptions`: Fortsetzen von existierenden Transkriptionen (optional)
+
+### Output-Dateien
+
+- **`whisper_comparison_results.csv`**: Hauptdatei mit allen Ergebnissen
+- **`whisper_comparison_results_sample.csv`**: Erste 100 Zeilen zur schnellen Inspektion
+- **`README.md`**: Dokumentation der Ausführung mit Parametern
+- **`whisper_comparison_results_intermediate/`**: Zwischendateien (JSON)
+  - `segments_with_metadata.json`
+  - `segments_with_transcriptions.json`
+
+### CSV-Spalten
+
+Die erzeugte CSV enthält folgende Informationen:
+
+**Metadaten:**
+- `filename`, `speaker_id`, `interview_number`
+- `startTime`, `endTime`, `interval`
+- `gender`, `dialect`, `segment_duration`
+- `train`, `test`: Binäre Indikatoren (1 = Segment war im jeweiligen Set, 0 = nicht)
+
+**Transkripte:**
+- `transcript_original`: Original-Transkript aus TextGrid
+- `transcript_large_v3`: Transkript von Whisper Large V3
+- `transcript_fine_tuned`: Transkript vom fine-tuned Modell
+
+**Metriken:**
+- `WER_*`: Word Error Rate (niedriger ist besser)
+- `CER_*`: Character Error Rate (niedriger ist besser)
+- `BLEU_*`: BLEU Score (höher ist besser)
+
+**Marker-Spalten:** Binäre Indikatoren für Interjektionen (`ah`, `euh`, etc.) und spezielle Muster (`(buzz)`, `XXX`, etc.)
+
+### SLURM-Batch-Skripte
+
+Für die Verarbeitung auf dem Cluster stehen SLURM-Batch-Skripte zur Verfügung:
+
+#### LangAge-Daten vergleichen
+
+```bash
+(.venv)$ sbatch scripts/run_whisper_comparison.sbatch
+```
+
+Das Skript kann durch Bearbeiten der Variablen angepasst werden:
+- `INPUT_DIR`: Eingabeverzeichnis
+- `FINE_TUNED_MODEL`: Pfad zum Modell
+- `CHECKPOINT`: Zu verwendender Checkpoint
+- `OUTPUT_DIR`: Ausgabeverzeichnis (wird automatisch generiert)
+- `NUM_CPUS`, `NUM_GPUS`: Ressourcen-Konfiguration
+- `BATCH_SIZE`, `TRANSCRIPTION_PROCESSES`: Verarbeitungs-Parameter
+
+#### ESLO-Daten vergleichen
+
+```bash
+# Für ESLO 30-39 Jahre
+(.venv)$ sbatch scripts/run_whisper_comparison_eslo.sbatch data/sampleESLO30-39 results/ESLO30-39
+
+# Für ESLO 65+ Jahre
+(.venv)$ sbatch scripts/run_whisper_comparison_eslo.sbatch data/sampleESLO65plus results/ESLO65plus
+
+# Für kombinierte ESLO-Daten
+(.venv)$ sbatch scripts/run_whisper_comparison_eslo.sbatch data/ESLOcombined results/ESLOcombined
+```
+
+Das ESLO-Skript akzeptiert zwei optionale Kommandozeilen-Argumente:
+1. Eingabeverzeichnis (Standard: `data/sampleESLO30-39`)
+2. Ausgabeverzeichnis (Standard: `results/ESLO30-39`)
+
 
 
 ## SLURM
@@ -285,8 +398,170 @@ Das `train_whisper.sbatch` Skript führt das Whisper-Training auf dem Cluster du
 - `RESUME_CHECKPOINT`: Checkpoint zum Fortsetzen (leer = von vorne, `true` = letzter, `checkpoint-XXXX` = spezifisch)
 
 
+## Training mit ESLO-Daten
+
+### ESLO-Daten kombinieren
+
+Um mit ESLO-Daten zu arbeiten, müssen zunächst die verschiedenen ESLO-Unterordner kombiniert werden. Dies geschieht mit symbolischen Links, um Speicherplatz zu sparen:
+
+```bash
+(.venv)$ mkdir -p data/ESLOcombined
+(.venv)$ cd data/ESLOcombined
+(.venv)$ ln -s ../sampleESLO30-39/* .
+(.venv)$ ln -s ../sampleESLO65plus/* .
+```
+
+### Dataset Dictionary für ESLO erstellen
+
+Nach der Kombination kann ein Dataset Dictionary für alle ESLO-Daten erstellt werden:
+
+```bash
+(.venv)$ python scripts/Textgrids2DatasetBatch.py \
+    -f data/ESLOcombined \
+    -o data/ESLODataSet \
+    -n 150 \
+    --batch_size 500 \
+    --audio_batch_processes 8
+```
+
+### Log-Mel Spektrogramme für ESLO
+
+Anschließend werden die Log-Mel Spektrogramme erstellt:
+
+```bash
+(.venv)$ python scripts/Dataset2LogMelSpecBatch.py \
+    -i data/ESLODataSet \
+    -o data/ESLOLogMelSpec \
+    --model_size large-v3 \
+    --num_cpus 150 \
+    --batch_size 1000
+```
+
+### Kombinierte LangAge und ESLO Daten
+
+Um ein Modell auf beiden Datensätzen zu trainieren, können LangAge und ESLO kombiniert werden:
+
+```bash
+(.venv)$ mkdir -p data/LangAgeESLOcombined
+(.venv)$ cd data/LangAgeESLOcombined
+(.venv)$ ln -s ../LangAge16kHz/* .
+(.venv)$ ln -s ../sampleESLO30-39/* .
+(.venv)$ ln -s ../sampleESLO65plus/* .
+```
+
+Danach kann das Dataset Dictionary für die kombinierten Daten erstellt werden:
+
+```bash
+(.venv)$ python scripts/Textgrids2DatasetBatch.py \
+    -f data/LangAgeESLOcombined \
+    -o data/LangAgeESLODataSet \
+    -n 150 \
+    --batch_size 500 \
+    --audio_batch_processes 8
+```
+
+Und die Log-Mel Spektrogramme:
+
+```bash
+(.venv)$ python scripts/Dataset2LogMelSpecBatch.py \
+    -i data/LangAgeESLODataSet \
+    -o data/LangAgeESLOLogMelSpec \
+    --model_size large-v3 \
+    --num_cpus 150 \
+    --batch_size 1000
+```
+
+Das Training erfolgt dann wie gewohnt mit dem kombinierten Dataset:
+
+```bash
+(.venv)$ python scripts/finetune_whisper_from_LogMel.py \
+    --dataset_path data/LangAgeESLOLogMelSpec \
+    --output_dir FrisperWhisper \
+    --version v2-combined \
+    --model_size large-v3 \
+    --num_gpus 4 \
+    --num_cpus 40
+```
+
+
+## Transkription mit fine-tuned Modellen
+
+Das Skript `transcribe_with_finetuned.py` ermöglicht die Transkription von Audio-Dateien mit Whisper-Modellen (lokal oder von HuggingFace). Es erstellt eine CSV-Datei mit Zeitstempeln und Transkriptionen.
+
+### Funktionen
+
+- Unterstützung für **lokale Modelle** und **HuggingFace Hub Modelle**
+- Verarbeitung **einzelner Audio-Dateien** oder **ganzer Verzeichnisse**
+- Automatische Segmentierung bei langen Audios (mit `--use_pipeline`)
+- CSV-Export mit ID, Start, Stop, Transkription (und optional Dateiname)
+
+### Verwendung
+
+**Einzelne Audio-Datei mit lokalem Modell:**
+
+```bash
+(.venv)$ python scripts/transcribe_with_finetuned.py \
+    -i data/LangAge16kHz/a001a.wav \
+    -m FrisperWhisper/largeV3.2/checkpoint-2000 \
+    -o transcription_result.csv \
+    --language french
+```
+
+**Verzeichnis mit HuggingFace Modell:**
+
+```bash
+(.venv)$ python scripts/transcribe_with_finetuned.py \
+    -i data/sampleESLO30-39 \
+    -m openai/whisper-large-v3 \
+    -o eslo_transcriptions.csv \
+    --language french
+```
+
+**Mit automatischer Segmentierung (für lange Audios):**
+
+```bash
+(.venv)$ python scripts/transcribe_with_finetuned.py \
+    -i audio_files/ \
+    -m openai/whisper-large-v3 \
+    -o results.csv \
+    --use_pipeline \
+    --device cuda
+```
+
+### Parameter
+
+- `-i, --input`: Pfad zu Audio-Datei oder Verzeichnis (erforderlich)
+- `-m, --model`: Modell-Pfad (lokal) oder HuggingFace Model-ID (z.B. `openai/whisper-large-v3`) (erforderlich)
+- `-o, --output`: Pfad zur Ausgabe-CSV-Datei (erforderlich)
+- `--language`: Sprache für Transkription (Standard: `french`)
+- `--device`: Gerät (`cpu`, `cuda`, oder `auto`; Standard: `auto`)
+- `--use_pipeline`: HuggingFace Pipeline verwenden (automatische Segmentierung für lange Audios)
+
+### CSV-Format
+
+**Einzelne Datei:**
+```csv
+ID,Start,Stop,Transcription
+1,00:00.000,00:12.500,"Bonjour, comment allez-vous?"
+2,00:12.500,00:25.320,"Je vais très bien, merci."
+```
+
+**Mehrere Dateien (Verzeichnis):**
+```csv
+ID,Filename,Start,Stop,Transcription
+1,audio1.wav,00:00.000,00:12.500,"Bonjour, comment allez-vous?"
+2,audio1.wav,00:12.500,00:25.320,"Je vais très bien, merci."
+3,audio2.wav,00:00.000,00:08.100,"C'est magnifique."
+```
+
+**Zeitformat:** `MM:SS.mmm` (Minuten:Sekunden.Millisekunden)
+
+### Unterstützte Audio-Formate
+
+`.wav`, `.mp3`, `.flac`, `.m4a`, `.ogg`, `.opus`
+
+
 ### TODOs
-- [ ] Transcription-Skript für Inferenz mit fine-tuned Modellen (`transcribe_with_finetuned.py`)
 
 
 
