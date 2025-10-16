@@ -28,22 +28,29 @@ echo "Job ID: $SLURM_JOB_ID"
 echo "Node: $SLURMD_NODENAME"
 echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
 
-# Configuration for large-v3 training
-DATASET_PATH="data/LangAgeLogMelSpec"
-OUTPUT_DIR="FrisperWhisper/largeV3.2"
-MODEL_SIZE="large-v3"
-NUM_GPUS=4
-DATALOADER_WORKERS=20
-TRAIN_BATCH_SIZE=1                    # Conservative for large-v3
-GRADIENT_ACCUMULATION=16              # Effective batch size = 1×4×16 = 64
-LEARNING_RATE=1.5e-5                  # Increased from 3e-6 for better convergence
-MAX_STEPS=10000                       # Sufficient for convergence
-WARMUP_STEPS=1000                     # 10% of max steps
-SAVE_STEPS=500
-EVAL_STEPS=500
-LOGGING_STEPS=50
-WEIGHT_DECAY=0.05                     # Increased from 0.02 for better regularization
-LR_SCHEDULER_TYPE="linear"            # Changed from cosine for more gradual decay
+# ==============================
+# Configuration with Environment Variables
+# ==============================
+
+# Set default values if environment variables are not provided
+DATASET_PATH="${DATASET_PATH:-data/LangAgeLogMelSpec}"
+OUTPUT_DIR="${OUTPUT_DIR:-FrisperWhisper/largeV3.2}"
+MODEL_SIZE="${MODEL_SIZE:-large-v3}"
+NUM_GPUS="${NUM_GPUS:-4}"
+NUM_CPUS="${NUM_CPUS:-24}"
+DATALOADER_WORKERS="${DATALOADER_WORKERS:-20}"
+TRAIN_BATCH_SIZE="${TRAIN_BATCH_SIZE:-1}"
+EVAL_BATCH_SIZE="${EVAL_BATCH_SIZE:-1}"
+GRADIENT_ACCUMULATION="${GRADIENT_ACCUMULATION:-16}"
+LEARNING_RATE="${LEARNING_RATE:-1.5e-5}"
+MAX_STEPS="${MAX_STEPS:-10000}"
+WARMUP_STEPS="${WARMUP_STEPS:-1000}"
+SAVE_STEPS="${SAVE_STEPS:-500}"
+EVAL_STEPS="${EVAL_STEPS:-500}"
+LOGGING_STEPS="${LOGGING_STEPS:-50}"
+WEIGHT_DECAY="${WEIGHT_DECAY:-0.05}"
+LR_SCHEDULER_TYPE="${LR_SCHEDULER_TYPE:-linear}"
+RESUME_CHECKPOINT="${RESUME_CHECKPOINT:-}"  # Optional, empty by default
 
 echo "========================================="
 echo "Training Configuration:"
@@ -58,6 +65,11 @@ echo "Effective batch size: $((TRAIN_BATCH_SIZE * NUM_GPUS * GRADIENT_ACCUMULATI
 echo "Learning rate: $LEARNING_RATE"
 echo "Max steps: $MAX_STEPS"
 echo "Warmup steps: $WARMUP_STEPS"
+echo "Save steps: $SAVE_STEPS"
+echo "Eval steps: $EVAL_STEPS"
+if [ -n "${RESUME_CHECKPOINT}" ]; then
+    echo "Resume from checkpoint: $RESUME_CHECKPOINT"
+fi
 echo "========================================="
 
 # Build command arguments for finetune_whisper_from_LogMEL.py
@@ -81,6 +93,11 @@ TRAIN_ARGS=(
     --bf16
     --report_to "tensorboard"
 )
+
+# Add resume checkpoint if specified
+if [ -n "${RESUME_CHECKPOINT}" ]; then
+    TRAIN_ARGS+=(--resume_from_checkpoint "$RESUME_CHECKPOINT")
+fi
 
 # Run training with the LogMEL script
 python scripts/finetune_whisper_from_LogMEL.py "${TRAIN_ARGS[@]}"

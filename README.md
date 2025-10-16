@@ -345,14 +345,97 @@ Das ESLO-Skript akzeptiert zwei optionale Kommandozeilen-Argumente:
 Für die Verarbeitung auf dem Cluster stehen verschiedene SLURM-Skripte zur Verfügung:
 
 ### Dataset-Erstellung
+
+Das `create_dataset.sbatch` Skript erstellt ein Dataset Dictionary aus TextGrid-Dateien und Audio-Dateien. Es können Umgebungsvariablen verwendet werden, um die Verarbeitung anzupassen.
+
+#### Standard-Verarbeitung (LangAge)
 ```bash
 (.venv)$ sbatch ./scripts/create_dataset.sbatch
 ```
 
+#### Angepasste Verarbeitung mit Umgebungsvariablen
+
+Für kombinierte LangAge und ESLO Daten:
+```bash
+(.venv)$ INPUT_FOLDER=data/LangAgeESLOcombined16kHz \
+         OUTPUT_FOLDER=data/LangAgeESLODataSet \
+         NUM_PROCESSES=150 \
+         sbatch ./scripts/create_dataset.sbatch
+```
+
+Für ESLO-Daten:
+```bash
+(.venv)$ INPUT_FOLDER=data/ESLOcombined16kHz \
+         OUTPUT_FOLDER=data/ESLODataSet \
+         NUM_PROCESSES=150 \
+         sbatch ./scripts/create_dataset.sbatch
+```
+
+Mit CSV-Datei für Test-Set Definition:
+```bash
+(.venv)$ INPUT_FOLDER=data/LangAge16kHz \
+         OUTPUT_FOLDER=data/LangAgeDataSet \
+         CSV_FILE=test_intervals.csv \
+         sbatch ./scripts/create_dataset.sbatch
+```
+
+**Anpassbare Parameter über Umgebungsvariablen:**
+- `INPUT_FOLDER`: Pfad zum Eingabeordner mit TextGrid- und Audio-Dateien (Standard: `data/LangAge16kHz`)
+- `OUTPUT_FOLDER`: Pfad zum Ausgabeordner für das Dataset Dictionary (Standard: `data/LangAgeDataSet`)
+- `NUM_PROCESSES`: Anzahl paralleler Prozesse für TextGrid-Verarbeitung (Standard: `120`)
+- `BATCH_SIZE`: Batch-Größe für die Verarbeitung von Einträgen (Standard: `500`)
+- `AUDIO_BATCH_PROCESSES`: Anzahl der Prozesse für Audio-Batch-Verarbeitung (Standard: `8`)
+- `CSV_FILE`: CSV-Datei mit Test-Set Intervallen (optional, leer = nicht verwendet)
+
 ### DataSet zu Log-Mel Spektrogrammen transformieren
+
+Das `run_dataset_preprocess_batch.sbatch` Skript transformiert ein Dataset Dictionary zu Log-Mel Spektrogrammen. Es können Umgebungsvariablen verwendet werden, um die Verarbeitung anzupassen.
+
+#### Standard-Verarbeitung (LangAge)
 ```bash
 (.venv)$ sbatch ./scripts/run_dataset_preprocess_batch.sbatch
 ```
+
+#### Angepasste Verarbeitung mit Umgebungsvariablen
+
+Für kombinierte LangAge und ESLO Daten:
+```bash
+(.venv)$ INPUT_DATASET=data/LangAgeESLODataSet \
+         OUTPUT_DATASET=data/LangAgeESLOLogMelSpec \
+         MODEL_SIZE=large-v3 \
+         NUM_CPUS=150 \
+         BATCH_SIZE=1000 \
+         sbatch ./scripts/run_dataset_preprocess_batch.sbatch
+```
+
+Für ESLO-Daten:
+```bash
+(.venv)$ INPUT_DATASET=data/ESLODataSet \
+         OUTPUT_DATASET=data/ESLOLogMelSpec \
+         MODEL_SIZE=large-v3 \
+         NUM_CPUS=150 \
+         BATCH_SIZE=1000 \
+         sbatch ./scripts/run_dataset_preprocess_batch.sbatch
+```
+
+Mit begrenzter Anzahl Samples (für Tests):
+```bash
+(.venv)$ INPUT_DATASET=data/LangAgeDataSet \
+         OUTPUT_DATASET=data/LangAgeLogMelSpec_test \
+         MAX_SAMPLES=1000 \
+         sbatch ./scripts/run_dataset_preprocess_batch.sbatch
+```
+
+**Anpassbare Parameter über Umgebungsvariablen:**
+- `INPUT_DATASET`: Pfad zum Eingabe-Dataset Dictionary (Standard: `data/LangAgeDataSet`)
+- `OUTPUT_DATASET`: Pfad zum Ausgabe-Dataset mit Log-Mel Spektrogrammen (Standard: `data/LangAgeLogMelSpec`)
+- `NUM_CPUS`: Anzahl der CPU-Kerne für die Verarbeitung (Standard: `100`)
+- `BATCH_SIZE`: Batch-Größe für die Verarbeitung von Dataset-Chunks (Standard: `400`)
+- `MODEL_SIZE`: Whisper-Modellgröße für Feature-Extraktion (`tiny`, `base`, `small`, `medium`, `large`, `large-v2`, `large-v3`; Standard: `large-v3`)
+- `WRITER_BATCH_SIZE`: Batch-Größe für das Speichern auf die Festplatte (Standard: `100`)
+- `MAX_MEMORY_PER_WORKER`: Maximaler Speicher pro Worker in GB (Standard: `4.0`)
+- `SHUFFLE_SEED`: Zufalls-Seed für das Mischen der Datasets (Standard: `42`)
+- `MAX_SAMPLES`: Maximale Anzahl zu verarbeitender Samples pro Split (optional, für Tests)
 
 ### Whisper Training
 
@@ -364,37 +447,66 @@ Das `train_whisper.sbatch` Skript führt das Whisper-Training auf dem Cluster du
 ```
 
 #### Angepasstes Training mit Umgebungsvariablen
+
+Für kombinierte LangAge und ESLO Daten:
+```bash
+(.venv)$ DATASET_PATH=data/LangAgeESLOLogMelSpec \
+         OUTPUT_DIR=FrisperWhisper/largeV3_LangAgeESLO \
+         MAX_STEPS=15000 \
+         sbatch ./scripts/train_whisper.sbatch
+```
+
+Für ESLO-Daten:
+```bash
+(.venv)$ DATASET_PATH=data/ESLOLogMelSpec \
+         OUTPUT_DIR=FrisperWhisper/largeV3_ESLO \
+         MAX_STEPS=10000 \
+         sbatch ./scripts/train_whisper.sbatch
+```
+
+Mit angepassten Hyperparametern:
 ```bash
 (.venv)$ DATASET_PATH=data/LangAgeLogMelSpec \
-         OUTPUT_DIR=FrisperWhisper \
-         VERSION=v2 \
-         MODEL_SIZE=medium \
-         NUM_GPUS=4 \
-         MAX_STEPS=10000 \
+         OUTPUT_DIR=FrisperWhisper/largeV3_custom \
+         LEARNING_RATE=2e-5 \
+         MAX_STEPS=12000 \
+         WARMUP_STEPS=1200 \
          sbatch ./scripts/train_whisper.sbatch
 ```
 
 #### Training von Checkpoint fortsetzen
 ```bash
 # Setze RESUME_CHECKPOINT Umgebungsvariable
-(.venv)$ RESUME_CHECKPOINT=checkpoint-1000 sbatch ./scripts/train_whisper.sbatch
+(.venv)$ DATASET_PATH=data/LangAgeESLOLogMelSpec \
+         OUTPUT_DIR=FrisperWhisper/largeV3_LangAgeESLO \
+         RESUME_CHECKPOINT=checkpoint-1000 \
+         sbatch ./scripts/train_whisper.sbatch
 
 # Oder automatisch vom letzten Checkpoint
-(.venv)$ RESUME_CHECKPOINT=true sbatch ./scripts/train_whisper.sbatch
+(.venv)$ DATASET_PATH=data/LangAgeESLOLogMelSpec \
+         OUTPUT_DIR=FrisperWhisper/largeV3_LangAgeESLO \
+         RESUME_CHECKPOINT=true \
+         sbatch ./scripts/train_whisper.sbatch
 ```
 
 **Anpassbare Parameter über Umgebungsvariablen:**
-- `DATASET_PATH`: Pfad zum Dataset (Standard: `data/LangAgeLogMelSpec`)
-- `OUTPUT_DIR`: Ausgabeordner (Standard: `FrisperWhisper`)
-- `VERSION`: Versionsbezeichnung (Standard: `v1`)
-- `MODEL_SIZE`: Modellgröße (Standard: `large`)
+- `DATASET_PATH`: Pfad zum Dataset mit Log-Mel Spektrogrammen (Standard: `data/LangAgeLogMelSpec`)
+- `OUTPUT_DIR`: Ausgabeordner für das trainierte Modell (Standard: `FrisperWhisper/largeV3.2`)
+- `MODEL_SIZE`: Whisper Modellgröße (Standard: `large-v3`)
 - `NUM_GPUS`: Anzahl GPUs (Standard: `4`)
-- `NUM_CPUS`: Anzahl CPUs (Standard: `16`)
-- `TRAIN_BATCH_SIZE`: Training Batch-Größe (Standard: `1`)
-- `EVAL_BATCH_SIZE`: Evaluation Batch-Größe (Standard: `1`)
-- `GRADIENT_ACCUMULATION`: Gradient Accumulation Steps (Standard: `16`)
-- `LEARNING_RATE`: Lernrate (Standard: `1e-5`)
-- `MAX_STEPS`: Maximale Trainingsschritte (Standard: `5000`)
+- `NUM_CPUS`: Anzahl CPUs für SLURM (Standard: `24`)
+- `DATALOADER_WORKERS`: Anzahl Dataloader Workers (Standard: `20`)
+- `TRAIN_BATCH_SIZE`: Training Batch-Größe pro GPU (Standard: `1`)
+- `EVAL_BATCH_SIZE`: Evaluation Batch-Größe pro GPU (Standard: `1`)
+- `GRADIENT_ACCUMULATION`: Gradient Accumulation Steps (Standard: `16`, effektive Batch-Größe = 1×4×16 = 64)
+- `LEARNING_RATE`: Lernrate (Standard: `1.5e-5`)
+- `MAX_STEPS`: Maximale Trainingsschritte (Standard: `10000`)
+- `WARMUP_STEPS`: Warmup-Schritte (Standard: `1000`)
+- `SAVE_STEPS`: Wie oft Checkpoints gespeichert werden (Standard: `500`)
+- `EVAL_STEPS`: Wie oft evaluiert wird (Standard: `500`)
+- `LOGGING_STEPS`: Wie oft geloggt wird (Standard: `50`)
+- `WEIGHT_DECAY`: Weight Decay für Regularisierung (Standard: `0.05`)
+- `LR_SCHEDULER_TYPE`: Learning Rate Scheduler Typ (Standard: `linear`)
 - `RESUME_CHECKPOINT`: Checkpoint zum Fortsetzen (leer = von vorne, `true` = letzter, `checkpoint-XXXX` = spezifisch)
 
 

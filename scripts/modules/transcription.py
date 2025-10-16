@@ -595,10 +595,68 @@ def transcribe_with_both_models_multi_gpu(segments, fine_tuned_model_path,
     return standard_results, fine_tuned_results
 
 
+def transcribe_with_multiple_models(segments, model_paths, batch_size=8, 
+                                   num_workers=1, progress_callback=None, num_gpus=1):
+    """
+    Transcribe segments with multiple Whisper models.
+    
+    Args:
+        segments (list): List of segment dictionaries
+        model_paths (list): List of model paths to use for transcription
+        batch_size (int): Batch size for processing
+        num_workers (int): Number of worker processes (not used in this implementation)
+        progress_callback (callable): Progress callback function
+        num_gpus (int): Number of GPUs to use (default: 1 for single-GPU mode)
+    
+    Returns:
+        tuple: Tuple of result lists, one for each model
+    """
+    if not segments:
+        return tuple([] for _ in model_paths)
+    
+    print(f"Starting transcription with {len(model_paths)} models")
+    print(f"   {len(segments)} segments, batch size {batch_size}, {num_gpus} GPUs")
+    
+    all_results = []
+    
+    # Use multi-GPU transcription if more than 1 GPU requested
+    if num_gpus > 1:
+        for i, model_path in enumerate(model_paths):
+            print(f"\n[Model {i+1}/{len(model_paths)}] Transcribing with {model_path}...")
+            transcriber = MultiGPUWhisperTranscriber(model_path, num_gpus)
+            results = transcriber.transcribe_segments_parallel(
+                segments, batch_size=batch_size, progress_callback=progress_callback
+            )
+            all_results.append(results)
+            
+            # Clear GPU memory between models
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                torch.cuda.synchronize()
+    else:
+        # Single-GPU transcription
+        for i, model_path in enumerate(model_paths):
+            print(f"\n[Model {i+1}/{len(model_paths)}] Transcribing with {model_path}...")
+            transcriber = WhisperTranscriber(model_path)
+            results = transcriber.transcribe_segments(
+                segments, batch_size=batch_size, progress_callback=progress_callback
+            )
+            all_results.append(results)
+            
+            # Clear GPU memory between models
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+    
+    print(f"Transcription completed for all {len(model_paths)} models")
+    
+    return tuple(all_results)
+
+
 def transcribe_with_both_models(segments, fine_tuned_model_path, batch_size=8, 
                                num_workers=1, progress_callback=None, num_gpus=1):
     """
     Transcribe segments with both standard and fine-tuned Whisper models.
+    (Wrapper around transcribe_with_multiple_models for backward compatibility)
     
     Args:
         segments (list): List of segment dictionaries
@@ -609,40 +667,9 @@ def transcribe_with_both_models(segments, fine_tuned_model_path, batch_size=8,
         num_gpus (int): Number of GPUs to use (default: 1 for single-GPU mode)
     
     Returns:
-        list: Segments with transcription results added
+        tuple: (standard_results, fine_tuned_results)
     """
-    if not segments:
-        return []
-    
-    # Use multi-GPU transcription if more than 1 GPU requested
-    if num_gpus > 1:
-        return transcribe_with_both_models_multi_gpu(
-            segments, fine_tuned_model_path, batch_size, num_gpus, progress_callback
-        )
-    
-    # Single-GPU transcription (original implementation)
-    print("Starting transcription with both models")
-    print(f"   {len(segments)} segments, batch size {batch_size}")
-    
-    # Initialize transcribers
-    standard_transcriber = WhisperTranscriber("openai/whisper-large-v3")
-    fine_tuned_transcriber = WhisperTranscriber(fine_tuned_model_path)
-    
-    # Transcribe with standard model
-    print("\nTranscribing with Whisper Large V3...")
-    print(f"Transcribing {len(segments)} segments with openai/whisper-large-v3")
-    standard_results = standard_transcriber.transcribe_segments(
-        segments, batch_size=batch_size, progress_callback=progress_callback
+    model_paths = ["openai/whisper-large-v3", fine_tuned_model_path]
+    return transcribe_with_multiple_models(
+        segments, model_paths, batch_size, num_workers, progress_callback, num_gpus
     )
-    
-    # Transcribe with fine-tuned model
-    print(f"\nTranscribing with fine-tuned model...")
-    print(f"Transcribing {len(segments)} segments with {fine_tuned_model_path}")
-    fine_tuned_results = fine_tuned_transcriber.transcribe_segments(
-        segments, batch_size=batch_size, progress_callback=progress_callback
-    )
-    
-    print("Transcription completed for both models")
-    
-    # Return separate results as expected by main script
-    return standard_results, fine_tuned_results
