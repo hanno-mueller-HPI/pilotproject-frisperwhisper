@@ -510,56 +510,28 @@ Mit angepassten Hyperparametern:
 - `RESUME_CHECKPOINT`: Checkpoint zum Fortsetzen (leer = von vorne, `true` = letzter, `checkpoint-XXXX` = spezifisch)
 
 
-## Training mit ESLO-Daten
-
-### ESLO-Daten kombinieren
-
-Um mit ESLO-Daten zu arbeiten, müssen zunächst die verschiedenen ESLO-Unterordner kombiniert werden. Dies geschieht mit symbolischen Links, um Speicherplatz zu sparen:
-
-```bash
-(.venv)$ mkdir -p data/ESLOcombined
-(.venv)$ cd data/ESLOcombined
-(.venv)$ ln -s ../sampleESLO30-39/* .
-(.venv)$ ln -s ../sampleESLO65plus/* .
-```
-
-### Dataset Dictionary für ESLO erstellen
-
-Nach der Kombination kann ein Dataset Dictionary für alle ESLO-Daten erstellt werden:
-
-```bash
-(.venv)$ python scripts/Textgrids2DatasetBatch.py \
-    -f data/ESLOcombined \
-    -o data/ESLODataSet \
-    -n 150 \
-    --batch_size 500 \
-    --audio_batch_processes 8
-```
-
-### Log-Mel Spektrogramme für ESLO
-
-Anschließend werden die Log-Mel Spektrogramme erstellt:
-
-```bash
-(.venv)$ python scripts/Dataset2LogMelSpecBatch.py \
-    -i data/ESLODataSet \
-    -o data/ESLOLogMelSpec \
-    --model_size large-v3 \
-    --num_cpus 150 \
-    --batch_size 1000
-```
+## Training mit LangAge und ESLO-Daten
 
 ### Kombinierte LangAge und ESLO Daten
 
 Um ein Modell auf beiden Datensätzen zu trainieren, können LangAge und ESLO kombiniert werden:
 
 ```bash
-(.venv)$ mkdir -p data/LangAgeESLOcombined
-(.venv)$ cd data/LangAgeESLOcombined
+(.venv)$ mkdir -p data/LangAgeESLOcombined16kHz
+(.venv)$ cd data/LangAgeESLOcombined16kHz
 (.venv)$ ln -s ../LangAge16kHz/* .
 (.venv)$ ln -s ../sampleESLO30-39/* .
 (.venv)$ ln -s ../sampleESLO65plus/* .
 ```
+
+### ESLO TextGrids transformieren
+
+Die TextGrids der ESLO-Daten sind anders strukturiert als die LangAge-TextGrids. Die ESLO TextGrids müssen daher transformiert werden (die alten TextGrids werden überschrieben):
+
+```bash
+python3 scripts/transformTextgrids2LangAgeFormat.py
+```
+### Dataset Dictionary erstellen
 
 Danach kann das Dataset Dictionary für die kombinierten Daten erstellt werden:
 
@@ -572,6 +544,8 @@ Danach kann das Dataset Dictionary für die kombinierten Daten erstellt werden:
     --audio_batch_processes 8
 ```
 
+### Log-Mel Spektrogramme
+
 Und die Log-Mel Spektrogramme:
 
 ```bash
@@ -582,6 +556,8 @@ Und die Log-Mel Spektrogramme:
     --num_cpus 150 \
     --batch_size 1000
 ```
+
+### Training
 
 Das Training erfolgt dann wie gewohnt mit dem kombinierten Dataset:
 
