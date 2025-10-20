@@ -158,9 +158,15 @@ def create_training_plots(data, output_dir, args):
     eval_loss_key = None
     
     for key in data.keys():
-        if 'train_loss' in key.lower() or (key.lower() == 'train/loss'):
+        key_lower = key.lower()
+        # Match training loss - prioritize 'train/loss' over 'train/train_loss'
+        if key_lower == 'train/loss':
             train_loss_key = key
-        elif 'eval_loss' in key.lower() or (key.lower() == 'eval/loss'):
+        elif 'train_loss' in key_lower or 'training_loss' in key_lower:
+            if not train_loss_key:  # Only use as fallback
+                train_loss_key = key
+        # Match evaluation loss
+        elif key_lower == 'eval/loss' or 'eval_loss' in key_lower or 'validation_loss' in key_lower:
             eval_loss_key = key
     
     if train_loss_key:

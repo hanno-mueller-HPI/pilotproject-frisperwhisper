@@ -348,10 +348,10 @@ Um die CSV mit Spalten zu erweitern, die anzeigen, ob ein Segment im Training od
 
 ```bash
 (.venv)$ python scripts/run_whisper_comparison.py \
-    --input data/LangAgeESLO16kHz \
-    --output results/comparison_v1 \
-    --fine_tuned_model FrisperWhisper/largeV1 \
-    --checkpoint checkpoint-2000 \
+    --input data/LangAgeESLOcombined16kHz \
+    --output results/LangAgeESLOv2 \
+    --fine_tuned_model FrisperWhisper/largeV3_LangAgeESLO_V2 \
+    --checkpoint checkpoint-4000 \
     --dataset_path data/LangAgeESLODataSet \
     --cpus 32 \
     --gpus 4 \

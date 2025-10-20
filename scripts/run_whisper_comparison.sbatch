@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=refinedCUDA1GPU
+#SBATCH --job-name=evaluation
 #SBATCH --account=aisc                      # AISC account for GPU access
 #SBATCH --partition=aisc                    # Partition with GPUs
 #SBATCH --qos=aisc                          # QoS setting for AISC
@@ -8,8 +8,8 @@
 #SBATCH --time=120:00:00                    # (5 days)
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=56                 # 112 CPUs
-#SBATCH --gres=gpu:1                        # 4 GPUs
+#SBATCH --cpus-per-task=64                 # 112 CPUs
+#SBATCH --gres=gpu:4                        # 4 GPUs
 #SBATCH --mem=600G                          # 600GB memory
 
 # Skip module loading - use virtual environment directly
@@ -45,21 +45,18 @@ echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
 # Create logs directory if it doesn't exist
 mkdir -p logs
 
-# Configuration
-INPUT_DIR="data/LangAge16kHz"
-FINE_TUNED_MODEL="./FrisperWhisper/largeV3.2"
-CHECKPOINT="checkpoint-2000"  # Use checkpoint-2000
+# Configuration - use environment variables with defaults
+INPUT_DIR="${INPUT_DIR:-data/LangAgeESLOcombined16kHz}"
+FINE_TUNED_MODEL="${FINE_TUNED_MODEL:-FrisperWhisper/largeV3_LangAgeESLO_V2}"
+CHECKPOINT="${CHECKPOINT:-checkpoint-4000}"
+OUTPUT_DIR="${OUTPUT_DIR:-results/LangAgeESLOv2}"
+DATASET_PATH="${DATASET_PATH:-data/LangAgeESLODataSet}"  # Dataset path for train/test columns
 
-# Automatically generate output directory name based on model and checkpoint
-MODEL_NAME="largeV3.2"
-CHECKPOINT_NUM="2000"
-OUTPUT_DIR="results/${MODEL_NAME}-check${CHECKPOINT_NUM}-refined1GPU"
-
-# Processing configuration
-NUM_CPUS=56
-NUM_GPUS=1
-BATCH_SIZE=64                           # Batch size for transcription
-TRANSCRIPTION_PROCESSES=8               # Number of batch processes for transcription
+# Processing configuration - use environment variables with defaults
+NUM_CPUS="${NUM_CPUS:-64}"
+NUM_GPUS="${NUM_GPUS:-4}"
+BATCH_SIZE="${BATCH_SIZE:-16}"                           # Batch size for transcription
+TRANSCRIPTION_PROCESSES="${TRANSCRIPTION_PROCESSES:-8}"  # Number of batch processes for transcription
 
 echo "========================================="
 echo "Whisper Comparison Configuration:"
@@ -70,6 +67,11 @@ if [ -n "$CHECKPOINT" ]; then
     echo "Checkpoint: $CHECKPOINT"
 else
     echo "Checkpoint: final model"
+fi
+if [ -n "$DATASET_PATH" ]; then
+    echo "Dataset path: $DATASET_PATH"
+else
+    echo "Dataset path: not specified"
 fi
 echo "CPUs: $NUM_CPUS"
 echo "GPUs: $NUM_GPUS"
@@ -92,6 +94,11 @@ COMPARISON_ARGS=(
 # Add checkpoint if specified
 if [ -n "$CHECKPOINT" ]; then
     COMPARISON_ARGS+=(--checkpoint "$CHECKPOINT")
+fi
+
+# Add dataset path if specified
+if [ -n "$DATASET_PATH" ]; then
+    COMPARISON_ARGS+=(--dataset_path "$DATASET_PATH")
 fi
 
 echo "Starting Whisper model comparison pipeline..."
