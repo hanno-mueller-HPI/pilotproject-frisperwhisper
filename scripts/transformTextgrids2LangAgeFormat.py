@@ -2,7 +2,7 @@
 """
 Transform ESLO TextGrid files to LangAge format.
 
-This script processes all ESLO TextGrid files in the data/LangAgeESLOcombined16kHz folder,
+This script processes all ESLO TextGrid files in the data/ESLOLangAgeCombined16kHz folder,
 applies the same transformations as eslo2langAge.py, and overwrites the original files
 with the transformed content.
 
@@ -11,6 +11,7 @@ ESLO files are identified by filenames starting with "ESLO1_ENT_" or "ESLO2_ENT_
 
 import os
 import re
+import argparse
 from pathlib import Path
 
 
@@ -178,15 +179,11 @@ def apply_eslo_to_langage_transformations(content):
     modified_content = re.sub(r'Ouille', 'ouille', modified_content)
     modified_content = re.sub(r'- ', '', modified_content)           
     
-    # Add space after apostrophe, except in specific expressions
-    # Use negative lookbehind to exclude specific words
-    modified_content = re.sub(
-        r"(?<!aujourd)(?<!d)(?<!c)(?<!n)(?<!quelqu)'(?! )",
-        "' ",
-        modified_content
-    )
+    # CORRECTED APOSTROPHE HANDLING:
+    # Step 1: Add space after ALL apostrophes (that don't already have space)
+    modified_content = re.sub(r"'(?! )", "' ", modified_content)
     
-    # But protect the specific expressions by temporarily marking them
+    # Step 2: Fix the protected words by removing the added spaces
     protected_words = [
         "aujourd'hui", "c'est-à-dire", "d'abord", "d'accord", 
         "d'ailleurs", "d'autant", "d'habitude", "d'œuvre", 
@@ -195,17 +192,25 @@ def apply_eslo_to_langage_transformations(content):
     
     # Replace apostrophes in protected words back (remove added space)
     for word in protected_words:
-        modified_content = re.sub(word.replace("'", "' "), word, modified_content)
+        spaced_version = word.replace("'", "' ")
+        modified_content = modified_content.replace(spaced_version, word)
     
     return modified_content
 
 
-def transform_eslo_textgrids():
+def transform_eslo_textgrids(input_directory=None):
     """
     Main function to process all ESLO TextGrid files in the target folder.
+    
+    Args:
+        input_directory (str, optional): Path to the input directory. 
+                                       If None, uses default path.
     """
     # Define the input folder path
-    input_folder = Path("/sc/home/hanno.mueller/pilotproject-frisperwhisper/data/LangAgeESLOcombined16kHz")
+    if input_directory:
+        input_folder = Path(input_directory)
+    else:
+        input_folder = Path("/sc/home/hanno.mueller/pilotproject-frisperwhisper/data/ESLOLangAgeCombined16kHz")
     
     if not input_folder.exists():
         print(f"Error: Input folder does not exist: {input_folder}")
@@ -256,4 +261,17 @@ def transform_eslo_textgrids():
 
 
 if __name__ == "__main__":
-    transform_eslo_textgrids()
+    # Set up command line argument parsing
+    parser = argparse.ArgumentParser(
+        description="Transform ESLO TextGrid files to LangAge format by adding spaces after apostrophes (except for protected words)."
+    )
+    parser.add_argument(
+        "--input", "-i",
+        type=str,
+        help="Input directory containing ESLO TextGrid files. If not specified, uses default: data/ESLOLangAgeCombined16kHz"
+    )
+    
+    args = parser.parse_args()
+    
+    # Run the transformation
+    transform_eslo_textgrids(args.input)

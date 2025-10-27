@@ -42,6 +42,14 @@ echo "Working directory: $(pwd)"
 export CUDA_VISIBLE_DEVICES=0,1,2,3
 echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
 
+# Verify Hugging Face authentication
+echo "Verifying Hugging Face authentication..."
+python -c "from huggingface_hub import whoami; print('HF Auth Status:', whoami()['name'])" || {
+    echo "ERROR: Hugging Face authentication failed!"
+    echo "Please run 'huggingface-cli login' before submitting the job"
+    exit 1
+}
+
 # Create logs directory if it doesn't exist
 mkdir -p logs
 

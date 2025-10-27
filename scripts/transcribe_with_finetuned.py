@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
 #############################################################################
-# Script Name: transcribe_with_finetuned.py                                #
-# Description: Transcribe audio using fine-tuned Whisper model             #
+# Script Name: transcribe_with_finetuned_chunked.py                        #
+# Description: Transcribe long audio using fine-tuned Whisper model       #
+#              with proper chunking for complete transcription             #
 # Author: Hanno Müller                                                      #
-# Date: 2025-10-08 (Enhanced)                                               #
+# Date: 2025-10-27 (Enhanced with chunking)                                #
 #############################################################################
 
 import os
@@ -12,8 +13,9 @@ import argparse
 import torch
 import librosa
 import pandas as pd
+import numpy as np
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from transformers import (
     WhisperProcessor,
     WhisperForConditionalGeneration,
@@ -24,7 +26,7 @@ from transformers import (
 def parse_arguments():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="Transcribe audio using Whisper model (local or HuggingFace)."
+        description="Transcribe audio using Whisper model with proper chunking for long files."
     )
     
     parser.add_argument(
@@ -58,9 +60,21 @@ def parse_arguments():
         help="Device to use: 'cpu', 'cuda', or 'auto' (default: auto)"
     )
     parser.add_argument(
+        "--chunk_length",
+        type=int,
+        default=30,
+        help="Chunk length in seconds for processing long audio (default: 30)"
+    )
+    parser.add_argument(
+        "--overlap",
+        type=int,
+        default=5,
+        help="Overlap between chunks in seconds (default: 5)"
+    )
+    parser.add_argument(
         "--use_pipeline",
         action="store_true",
-        help="Use HuggingFace pipeline (automatic segmentation for long audio)"
+        help="Use HuggingFace pipeline (requires FFmpeg libraries)"
     )
     
     return parser.parse_args()
@@ -115,20 +129,154 @@ def load_model(model_path: str, device: str, use_pipeline: bool = False):
     
     if use_pipeline:
         # Use HuggingFace pipeline for automatic segmentation
-        pipe = pipeline(
-            "automatic-speech-recognition",
-            model=model_path,
-            device=device if device != "cpu" else -1,
-            return_timestamps=True
-        )
-        return pipe
-    else:
+        try:
+            pipe = pipeline(
+                "automatic-speech-recognition",
+                model=model_path,
+                device=device if device != "cpu" else -1,
+                return_timestamps=True
+            )
+            return pipe
+        except Exception as e:
+            print(f"Failed to load pipeline: {e}")
+            print("Falling back to manual chunking method...")
+            use_pipeline = False
+    
+    if not use_pipeline:
         # Load model and processor separately
         processor = WhisperProcessor.from_pretrained(model_path)
         model = WhisperForConditionalGeneration.from_pretrained(model_path)
         model = model.to(device)
         model.eval()
         return model, processor
+
+
+def chunk_audio(audio: np.ndarray, sr: int, chunk_length: int, overlap: int) -> List[Tuple[np.ndarray, float, float]]:
+    """
+    Split audio into overlapping chunks.
+    
+    Args:
+        audio: Audio array
+        sr: Sample rate
+        chunk_length: Length of each chunk in seconds
+        overlap: Overlap between chunks in seconds
+        
+    Returns:
+        List of (chunk_audio, start_time, end_time) tuples
+    """
+    chunk_samples = chunk_length * sr
+    overlap_samples = overlap * sr
+    step_samples = chunk_samples - overlap_samples
+    
+    chunks = []
+    start_sample = 0
+    
+    while start_sample < len(audio):
+        end_sample = min(start_sample + chunk_samples, len(audio))
+        
+        # Extract chunk
+        chunk = audio[start_sample:end_sample]
+        
+        # Calculate time stamps
+        start_time = start_sample / sr
+        end_time = end_sample / sr
+        
+        chunks.append((chunk, start_time, end_time))
+        
+        # Move to next chunk
+        start_sample += step_samples
+        
+        # If we've reached the end, break
+        if end_sample >= len(audio):
+            break
+    
+    return chunks
+
+
+def transcribe_chunk(chunk: np.ndarray, model, processor, device: str, language: str = "french") -> str:
+    """
+    Transcribe a single audio chunk.
+    
+    Args:
+        chunk: Audio chunk
+        model: Whisper model
+        processor: Whisper processor
+        device: Device to use
+        language: Language code
+        
+    Returns:
+        Transcription text
+    """
+    # Process audio to features
+    inputs = processor(chunk, sampling_rate=16000, return_tensors="pt")
+    input_features = inputs.input_features.to(device)
+    
+    # Generate transcription
+    with torch.no_grad():
+        forced_decoder_ids = processor.get_decoder_prompt_ids(
+            language=language, 
+            task="transcribe"
+        )
+        
+        predicted_ids = model.generate(
+            input_features,
+            forced_decoder_ids=forced_decoder_ids,
+            max_length=448,
+            num_beams=5,
+            early_stopping=True,
+            do_sample=False,
+            temperature=0.0
+        )
+    
+    # Decode the transcription
+    transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
+    return transcription.strip()
+
+
+def merge_overlapping_transcriptions(chunks_with_transcriptions: List[Tuple[str, float, float]], overlap: int) -> List[Dict]:
+    """
+    Merge overlapping transcriptions intelligently.
+    
+    Args:
+        chunks_with_transcriptions: List of (transcription, start_time, end_time) tuples
+        overlap: Overlap in seconds
+        
+    Returns:
+        List of merged segment dictionaries
+    """
+    if not chunks_with_transcriptions:
+        return []
+    
+    segments = []
+    current_start = 0.0
+    merged_text = ""
+    
+    for i, (text, start_time, end_time) in enumerate(chunks_with_transcriptions):
+        if i == 0:
+            # First chunk
+            merged_text = text
+            current_start = start_time
+        else:
+            # For subsequent chunks, try to find overlap and merge
+            # Simple approach: remove potential repeated text at the beginning
+            words = text.split()
+            if len(words) > 1:
+                # Remove first few words that might be repeated from overlap
+                overlap_words = min(len(words) // 4, 3)  # Remove up to 3 words or 1/4 of words
+                text = " ".join(words[overlap_words:])
+            
+            if text.strip():  # Only add if there's meaningful content
+                merged_text += " " + text
+        
+        # If this is the last chunk or we want to create segments, add current segment
+        if i == len(chunks_with_transcriptions) - 1:
+            segments.append({
+                "start_ms": current_start * 1000,
+                "end_ms": end_time * 1000,
+                "text": merged_text.strip()
+            })
+    
+    return segments
 
 
 def transcribe_with_pipeline(audio_path: str, pipe, language: str = "french") -> List[Dict]:
@@ -143,7 +291,7 @@ def transcribe_with_pipeline(audio_path: str, pipe, language: str = "french") ->
     Returns:
         List of segment dictionaries with start, end, and text
     """
-    print(f"Transcribing: {audio_path}")
+    print(f"Transcribing with pipeline: {audio_path}")
     
     # Transcribe with timestamps
     result = pipe(
@@ -172,9 +320,10 @@ def transcribe_with_pipeline(audio_path: str, pipe, language: str = "french") ->
     return segments
 
 
-def transcribe_with_model(audio_path: str, model, processor, device: str, language: str = "french") -> List[Dict]:
+def transcribe_with_chunking(audio_path: str, model, processor, device: str, language: str = "french", 
+                           chunk_length: int = 30, overlap: int = 5) -> List[Dict]:
     """
-    Transcribe audio using model and processor (whole file at once).
+    Transcribe long audio using chunking approach.
     
     Args:
         audio_path: Path to audio file
@@ -182,44 +331,44 @@ def transcribe_with_model(audio_path: str, model, processor, device: str, langua
         processor: Whisper processor
         device: Device to use
         language: Language code
+        chunk_length: Length of each chunk in seconds
+        overlap: Overlap between chunks in seconds
         
     Returns:
-        List with single segment dictionary
+        List of segment dictionaries
     """
-    print(f"Transcribing: {audio_path}")
+    print(f"Transcribing with chunking: {audio_path}")
+    print(f"  Chunk length: {chunk_length}s, Overlap: {overlap}s")
     
     # Load audio
     audio, sr = librosa.load(audio_path, sr=16000)
-    duration_ms = (len(audio) / sr) * 1000
+    total_duration = len(audio) / sr
+    print(f"  Audio duration: {total_duration:.2f}s")
     
-    # Process audio to features
-    inputs = processor(audio, sampling_rate=16000, return_tensors="pt")
-    input_features = inputs.input_features.to(device)
+    # Split into chunks
+    chunks = chunk_audio(audio, sr, chunk_length, overlap)
+    print(f"  Created {len(chunks)} chunks")
     
-    # Generate transcription
-    with torch.no_grad():
-        forced_decoder_ids = processor.get_decoder_prompt_ids(
-            language=language, 
-            task="transcribe"
-        )
+    # Transcribe each chunk
+    chunks_with_transcriptions = []
+    
+    for i, (chunk, start_time, end_time) in enumerate(chunks):
+        print(f"  Processing chunk {i+1}/{len(chunks)} ({start_time:.1f}s - {end_time:.1f}s)")
         
-        predicted_ids = model.generate(
-            input_features,
-            forced_decoder_ids=forced_decoder_ids,
-            max_length=448,  # Increased for longer audio
-            num_beams=5,
-            early_stopping=True
-        )
+        try:
+            transcription = transcribe_chunk(chunk, model, processor, device, language)
+            if transcription.strip():  # Only keep non-empty transcriptions
+                chunks_with_transcriptions.append((transcription, start_time, end_time))
+                print(f"    → \"{transcription[:50]}{'...' if len(transcription) > 50 else ''}\"")
+            else:
+                print(f"    → (empty)")
+        except Exception as e:
+            print(f"    → Error: {e}")
     
-    # Decode the transcription
-    transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
+    # Merge overlapping transcriptions
+    segments = merge_overlapping_transcriptions(chunks_with_transcriptions, overlap)
     
-    # Return as single segment
-    return [{
-        "start_ms": 0.0,
-        "end_ms": duration_ms,
-        "text": transcription.strip()
-    }]
+    return segments
 
 
 def format_time_ms(milliseconds: float) -> str:
@@ -284,12 +433,15 @@ def main():
     args = parse_arguments()
     
     print("=" * 60)
-    print("WHISPER TRANSCRIPTION")
+    print("WHISPER TRANSCRIPTION WITH CHUNKING")
     print("=" * 60)
     print(f"Input: {args.input}")
     print(f"Model: {args.model}")
     print(f"Output: {args.output}")
     print(f"Language: {args.language}")
+    print(f"Chunk length: {args.chunk_length}s")
+    print(f"Overlap: {args.overlap}s")
+    print(f"Use pipeline: {args.use_pipeline}")
     
     # Determine device
     if args.device == "auto":
@@ -312,14 +464,16 @@ def main():
     
     # Load model
     print("\nLoading model...")
-    if args.use_pipeline:
-        pipe = load_model(args.model, device, use_pipeline=True)
-        print("✓ Pipeline loaded successfully")
-        model_objects = (pipe,)
+    model_objects = load_model(args.model, device, args.use_pipeline)
+    
+    if isinstance(model_objects, tuple):
+        model, processor = model_objects
+        use_chunking = True
+        print("✓ Model loaded successfully for chunking")
     else:
-        model, processor = load_model(args.model, device, use_pipeline=False)
-        print("✓ Model loaded successfully")
-        model_objects = (model, processor)
+        pipe = model_objects
+        use_chunking = False
+        print("✓ Pipeline loaded successfully")
     
     # Transcribe all files
     print(f"\nTranscribing {len(audio_files)} file(s)...")
@@ -327,10 +481,13 @@ def main():
     
     for audio_path in audio_files:
         try:
-            if args.use_pipeline:
-                segments = transcribe_with_pipeline(audio_path, model_objects[0], args.language)
+            if use_chunking:
+                segments = transcribe_with_chunking(
+                    audio_path, model, processor, device, args.language,
+                    args.chunk_length, args.overlap
+                )
             else:
-                segments = transcribe_with_model(audio_path, model_objects[0], model_objects[1], device, args.language)
+                segments = transcribe_with_pipeline(audio_path, pipe, args.language)
             
             # Add filename to each segment
             filename = os.path.basename(audio_path)

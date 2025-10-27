@@ -10,9 +10,10 @@
    - [2.1. Datenaufbereitung](#21-datenaufbereitung)
      - [2.1.1. TRS zu TextGrid + Dataset Kombination](#211-trs-zu-textgrid--dataset-kombination)
      - [2.1.2. ESLO-TextGrid zu LangAge-TextGrid](#212-eslo-textgrid-zu-langage-textgrid)
-     - [2.1.3. Audio-Resampling](#213-audio-resampling)
-     - [2.1.4. Dataset Dictionary](#214-dataset-dictionary)
-     - [2.1.5. Log-Mel Spektrogramme](#215-log-mel-spektrogramme)
+     - [2.1.3. Dataset Kombination](#213-dataset-kombination)
+     - [2.1.4. Audio-Resampling](#214-audio-resampling)
+     - [2.1.5. Dataset Dictionary](#215-dataset-dictionary)
+     - [2.1.6. Log-Mel Spektrogramme](#216-log-mel-spektrogramme)
    - [2.2. Fine-Tuning](#22-fine-tuning)
 3. [Fine-Tuning mit SLURM](#3-fine-tuning-mit-slurm)
    - [3.1. Datenaufbereitung](#31-datenaufbereitung)
@@ -31,7 +32,7 @@ Dieses Dokument beschreibt das Fine-Tuning eines Whisper-Modells für französis
 
 Der Fine-Tuning-Prozess kombiniert zwei französische Sprachdatensätze:
 - **LangAge-Korpus**: Hauptdatensatz mit demographisch-strukturierten Sprachdaten
-- **ESLO-Daten**: Ergänzungsdaten für spezifische Altersgruppen (30-39 Jahre, 65+ Jahre)
+- **ESLO-Daten**: Ergänzungsdaten für spezifische Altersgruppen (26-46 Jahre inkl. 30-39 Jahre, 65+ Jahre)
 
 Die Kombination erfolgt durch symbolische Links, wodurch ein einheitlicher Datensatz für das Training entsteht, ohne Speicherplatz zu verschwenden.
 
@@ -68,10 +69,6 @@ Dann werden die benötigten Pakete installiert. UV sorgt dafür, dass die exakte
 
 ### 2.1. Datenaufbereitung
 
-#### 2.1.1. TRS zu TextGrid + Dataset Kombination
-
-**Schritt 1: Daten-Setup**
-
 Downloade oder hinterlege die LangAge und die ESLO Daten in die folgenden beiden Ordner:
 
 ```bash
@@ -79,7 +76,9 @@ Downloade oder hinterlege die LangAge und die ESLO Daten in die folgenden beiden
 (.venv)$ mkdir -p data/ESLO
 ```
 
-**Schritt 2: TRS zu TextGrid Konvertierung**
+#### 2.1.1. TRS zu TextGrid + Dataset Kombination
+
+**TRS zu TextGrid Konvertierung**
 
 Falls die TextGrid-Dateien nicht vorhanden sind oder aktualisiert werden müssen, konvertiere die TRS-Dateien zu TextGrids:
 
@@ -87,55 +86,54 @@ Falls die TextGrid-Dateien nicht vorhanden sind oder aktualisiert werden müssen
 (.venv)$ python scripts/trs2tg.py data/LangAge
 ```
 
-**Schritt 3: Dataset Kombination**
-
-Erstelle eine kombinierte Struktur mit symbolischen Links:
-
-```bash
-# Erstelle kombiniertes Verzeichnis
-(.venv)$ mkdir -p data/LangAgeESLOcombined
-
-# Füge symbolische Links hinzu
-(.venv)$ cd data/LangAgeESLOcombined
-(.venv)$ ln -s ../LangAge/* .
-(.venv)$ ln -s ../ESLO/* .
-```
-
-Dies erstellt ein einheitliches Verzeichnis mit allen Daten ohne Duplizierung.
-
 #### 2.1.2. ESLO-TextGrid zu LangAge-TextGrid
 
 ESLO-TextGrid-Dateien müssen in das LangAge-Format konvertiert werden für einheitliche Verarbeitung:
 
 ```bash
-(.venv)$ python scripts/transformTextgrids2LangAgeFormat.py \
-    --input data/LangAgeESLOcombined
+(.venv)$ python scripts/transformTextgrids2LangAgeFormat.py --input data/ESLO
 ```
 
 **Hinweis:** Dieses Skript harmonisiert die TextGrid-Strukturen zwischen den beiden Datensätzen. Die originalen ESLO-TextGrids werden dabei überschrieben.
 
-#### 2.1.3. Audio-Resampling
+#### 2.1.3. Dataset Kombination
+
+Erstelle eine kombinierte Struktur mit symbolischen Links:
+
+```bash
+# Erstelle kombiniertes Verzeichnis
+(.venv)$ mkdir -p data/ESLOLangAgeCombined
+
+# Füge symbolische Links hinzu
+(.venv)$ ln -s ./data/LangAge/* data/ESLOLangAgeCombined
+(.venv)$ ln -s ./data/ESLO/* data/ESLOLangAgeCombined
+```
+
+Dies erstellt ein einheitliches Verzeichnis mit allen Daten ohne Duplizierung.
+
+#### 2.1.4. Audio-Resampling
 
 Audio-Dateien werden von 44,1 kHz auf 16 kHz heruntergetastet (Whisper-Anforderung):
 
 ```bash
-(.venv)$ python scripts/resample44k16k.py -i data/LangAgeESLOcombined -p 40
+(.venv)$ cp data/ESLOLangAgeCombined data/ESLOLangAgeCombined16kHz
+(.venv)$ python scripts/resample44k16k.py -i data/ESLOLangAgeCombined16kHz -p 40
 ```
 
 **Parameter:**
 - `-i`: Eingabeverzeichnis
 - `-p`: Anzahl paralleler Prozesse (empfohlen: 50% der verfügbaren Kerne)
 
-**Hinweis:** Dieser Schritt überschreibt die ursprünglichen Dateien mit den resampelten Versionen.
+**Hinweis:** Dieser Schritt überschreibt die ursprünglichen Dateien mit den resampelten Versionen. Deshalb werden die Dateien vorher kopiert
 
-#### 2.1.4. Dataset Dictionary
+#### 2.1.5. Dataset Dictionary
 
 Erstelle ein HuggingFace Dataset Dictionary mit Train/Test-Splits:
 
 ```bash
 (.venv)$ python scripts/Textgrids2DatasetBatch.py \
-    -f data/LangAgeESLOcombined \
-    -o data/LangAgeESLODataSet \
+    -f data/ESLOLangAgeCombined \
+    -o data/ESLOLangAgeDataSet \
     -n 150 \
     --batch_size 500 \
     --audio_batch_processes 8
@@ -154,14 +152,14 @@ Erstelle ein HuggingFace Dataset Dictionary mit Train/Test-Splits:
 - Entfernung von "(buzz)", "XXX"-Mustern und Klammer-Inhalten
 - Sprecher-Filter (z.B. Interviewer ausschließen)
 
-#### 2.1.5. Log-Mel Spektrogramme
+#### 2.1.6. Log-Mel Spektrogramme
 
 Konvertiere Audio zu Log-Mel Spektrogrammen (Whisper-Eingabeformat):
 
 ```bash
 (.venv)$ python scripts/Dataset2LogMelSpecBatch.py \
-    -i data/LangAgeESLODataSet \
-    -o data/LangAgeESLOLogMelSpec \
+    -i data/ESLOLangAgeDataSet \
+    -o data/ESLOLangAgeLogMelSpec \
     --model_size large-v3 \
     --num_cpus 150 \
     --batch_size 1000
@@ -180,7 +178,7 @@ Starte das eigentliche Fine-Tuning:
 
 ```bash
 (.venv)$ python scripts/finetune_whisper_from_LogMel.py \
-    --dataset_path data/LangAgeESLOLogMelSpec \
+    --dataset_path data/ESLOLangAgeLogMelSpec \
     --output_dir FrisperWhisper \
     --version v1 \
     --model_size large-v3 \
@@ -198,14 +196,14 @@ Fortsetzen von vorherigem Training:
 ```bash
 # Automatisch vom letzten Checkpoint
 (.venv)$ python scripts/finetune_whisper_from_LogMel.py \
-    --dataset_path data/LangAgeESLOLogMelSpec \
+    --dataset_path data/ESLOLangAgeLogMelSpec \
     --output_dir FrisperWhisper \
     --version v1 \
     --resume_from_checkpoint true
 
 # Von spezifischem Checkpoint
 (.venv)$ python scripts/finetune_whisper_from_LogMel.py \
-    --dataset_path data/LangAgeESLOLogMelSpec \
+    --dataset_path data/ESLOLangAgeLogMelSpec \
     --output_dir FrisperWhisper \
     --version v1 \
     --resume_from_checkpoint checkpoint-1000
@@ -218,8 +216,8 @@ Fortsetzen von vorherigem Training:
 **Dataset-Erstellung für kombinierte LangAge+ESLO Daten:**
 
 ```bash
-(.venv)$ INPUT_FOLDER=data/LangAgeESLOcombined16kHz \
-         OUTPUT_FOLDER=data/LangAgeESLODataSet \
+(.venv)$ INPUT_FOLDER=data/ESLOLangAgeCombined16kHz \
+         OUTPUT_FOLDER=data/ESLOLangAgeDataSet \
          NUM_PROCESSES=150 \
          BATCH_SIZE=500 \
          AUDIO_BATCH_PROCESSES=8 \
@@ -229,8 +227,8 @@ Fortsetzen von vorherigem Training:
 **Log-Mel Spektrogramm-Erstellung:**
 
 ```bash
-(.venv)$ INPUT_DATASET=data/LangAgeESLODataSet \
-         OUTPUT_DATASET=data/LangAgeESLOLogMelSpec \
+(.venv)$ INPUT_DATASET=data/ESLOLangAgeDataSet \
+         OUTPUT_DATASET=data/ESLOLangAgeLogMelSpec \
          MODEL_SIZE=large-v3 \
          NUM_CPUS=150 \
          BATCH_SIZE=1000 \
@@ -260,8 +258,8 @@ Fortsetzen von vorherigem Training:
 **Training mit kombinierten LangAge+ESLO Daten:**
 
 ```bash
-(.venv)$ DATASET_PATH=data/LangAgeESLOLogMelSpec \
-         OUTPUT_DIR=FrisperWhisper/largeV3_LangAgeESLO \
+(.venv)$ DATASET_PATH=data/ESLOLangAgeLogMelSpec \
+         OUTPUT_DIR=FrisperWhisper/largeV3_ESLOLangAge \
          MODEL_SIZE=large-v3 \
          NUM_GPUS=4 \
          NUM_CPUS=24 \
@@ -275,14 +273,14 @@ Fortsetzen von vorherigem Training:
 
 ```bash
 # Automatisch vom letzten Checkpoint
-(.venv)$ DATASET_PATH=data/LangAgeESLOLogMelSpec \
-         OUTPUT_DIR=FrisperWhisper/largeV3_LangAgeESLO \
+(.venv)$ DATASET_PATH=data/ESLOLangAgeLogMelSpec \
+         OUTPUT_DIR=FrisperWhisper/largeV3_ESLOLangAge \
          RESUME_CHECKPOINT=true \
          sbatch scripts/train_whisper.sbatch
 
 # Von spezifischem Checkpoint
-(.venv)$ DATASET_PATH=data/LangAgeESLOLogMelSpec \
-         OUTPUT_DIR=FrisperWhisper/largeV3_LangAgeESLO \
+(.venv)$ DATASET_PATH=data/ESLOLangAgeLogMelSpec \
+         OUTPUT_DIR=FrisperWhisper/largeV3_ESLOLangAge \
          RESUME_CHECKPOINT=checkpoint-2000 \
          sbatch scripts/train_whisper.sbatch
 ```
@@ -319,7 +317,7 @@ Systematischer Vergleich zwischen Whisper Large V3 und fine-tuned Modell:
     --output results/comparison_v1 \
     --fine_tuned_model FrisperWhisper/largeV1 \
     --checkpoint checkpoint-2000 \
-    --dataset_path data/LangAgeESLODataSet \
+    --dataset_path data/ESLOLangAgeDataSet \
     --cpus 32 \
     --gpus 4 \
     --batch_size 16 \
@@ -348,11 +346,11 @@ Um die CSV mit Spalten zu erweitern, die anzeigen, ob ein Segment im Training od
 
 ```bash
 (.venv)$ python scripts/run_whisper_comparison.py \
-    --input data/LangAgeESLOcombined16kHz \
-    --output results/LangAgeESLOv2 \
-    --fine_tuned_model FrisperWhisper/largeV3_LangAgeESLO_V2 \
+    --input data/ESLOLangAgeCombined16kHz \
+    --output results/ESLOLangAgev2 \
+    --fine_tuned_model FrisperWhisper/largeV3_ESLOLangAge_V2 \
     --checkpoint checkpoint-4000 \
-    --dataset_path data/LangAgeESLODataSet \
+    --dataset_path data/ESLOLangAgeDataSet \
     --cpus 32 \
     --gpus 4 \
     --batch_size 16 \
