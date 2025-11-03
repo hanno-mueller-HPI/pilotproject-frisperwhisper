@@ -4,7 +4,7 @@
 #SBATCH --partition=aisc                    # Partition for compute jobs
 #SBATCH --output=logs/resample_44k_to_16k_%j.out
 #SBATCH --error=logs/resample_44k_to_16k_%j.err
-#SBATCH --time=24:00:00                     # Default 24 hours
+#SBATCH --time=48:00:00                     # Default 48 hours
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=60                  # Default 60 CPUs

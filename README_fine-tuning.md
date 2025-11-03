@@ -105,8 +105,8 @@ Erstelle eine kombinierte Struktur mit symbolischen Links:
 (.venv)$ mkdir -p data/ESLOLangAgeCombined
 
 # Füge symbolische Links hinzu
-(.venv)$ ln -s ./data/LangAge/* data/ESLOLangAgeCombined
-(.venv)$ ln -s ./data/ESLO/* data/ESLOLangAgeCombined
+(.venv)$ ln -s ../LangAge/* ./data/ESLOLangAgeCombined/
+(.venv)$ ln -s ../ESLO/* ./data/ESLOLangAgeCombined/
 ```
 
 Dies erstellt ein einheitliches Verzeichnis mit allen Daten ohne Duplizierung.
@@ -132,7 +132,7 @@ Erstelle ein HuggingFace Dataset Dictionary mit Train/Test-Splits:
 
 ```bash
 (.venv)$ python scripts/Textgrids2DatasetBatch.py \
-    -f data/ESLOLangAgeCombined \
+    -f data/ESLOLangAgeCombined16kHz \
     -o data/ESLOLangAgeDataSet \
     -n 150 \
     --batch_size 500 \

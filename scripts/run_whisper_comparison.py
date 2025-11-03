@@ -1,8 +1,18 @@
+#!/usr/bin/env python3
+
 #############################################################################
-# Script Name: run_whisper_comparison_pipeline.py                          #
-# Description: Pipeline for comparing Whisper Large V3 vs fine-tuned model #
+# Script Name: run_whisper_comparison.py                                   #
+# Description: Consolidated script to compare Whisper Large V3 vs          #
+#              fine-tuned model with comprehensive CSV output               #
 # Author: Hanno Müller                                                      #
-# Date: 2025-09-03                                                          #
+# Date: 2025-10-30                                                          #
+#                                                                           #
+# Features:                                                                 #
+# - Compare 2 models: Whisper Large V3 vs Fine-tuned model                #
+# - Multi-GPU parallel processing                                          #
+# - Train/test split lookup from HuggingFace dataset                       #
+# - Comprehensive CSV output with all metrics and marker columns           #
+# - Resume functionality and intermediate file saving                      #
 #############################################################################
 
 import os
@@ -25,12 +35,14 @@ from metrics_calculation import calculate_metrics_for_segments, print_metrics_su
 def load_dataset_splits(dataset_path):
     """
     Load dataset and create a lookup dictionary for train/test membership.
+    Uses Method 2: extract filename from audio.path, use client_id and segment.
     
     Args:
         dataset_path (str): Path to HuggingFace dataset directory
         
     Returns:
-        dict: Lookup dictionary with keys like 'filename_speaker_interval' mapped to {'train': 0/1, 'test': 0/1}
+        dict: Lookup dictionary with keys created from audio path, client_id, and segment
+              mapped to {'train': 0/1, 'test': 0/1}
     """
     if not dataset_path or not os.path.exists(dataset_path):
         return None
@@ -47,11 +59,15 @@ def load_dataset_splits(dataset_path):
         if 'train' in dataset_dict:
             print(f"   Processing train split ({len(dataset_dict['train'])} samples)...")
             for item in dataset_dict['train']:
-                # Create a unique key from filename, speaker, and interval
-                # The dataset should have these fields from the TextGrid processing
-                filename = item.get('filename', '')
-                speaker = item.get('speaker', '')
-                interval = item.get('interval', 0)
+                # Extract filename from audio path (e.g., 'data/.../ESLO1_ENT_019.wav' -> 'ESLO1_ENT_019')
+                audio_path = item.get('audio', {}).get('path', '')
+                if audio_path:
+                    filename = os.path.splitext(os.path.basename(audio_path))[0]
+                else:
+                    filename = ''
+                
+                speaker = item.get('client_id', '')
+                interval = item.get('segment', '')
                 
                 key = f"{filename}_{speaker}_{interval}"
                 lookup[key] = {'train': 1, 'test': 0}
@@ -60,14 +76,19 @@ def load_dataset_splits(dataset_path):
         if 'test' in dataset_dict:
             print(f"   Processing test split ({len(dataset_dict['test'])} samples)...")
             for item in dataset_dict['test']:
-                filename = item.get('filename', '')
-                speaker = item.get('speaker', '')
-                interval = item.get('interval', 0)
+                # Extract filename from audio path
+                audio_path = item.get('audio', {}).get('path', '')
+                if audio_path:
+                    filename = os.path.splitext(os.path.basename(audio_path))[0]
+                else:
+                    filename = ''
+                
+                speaker = item.get('client_id', '')
+                interval = item.get('segment', '')
                 
                 key = f"{filename}_{speaker}_{interval}"
                 if key in lookup:
-                    # This shouldn't happen, but handle it
-                    lookup[key] = {'train': 1, 'test': 1}  # In both?!
+                    lookup[key] = {'train': 1, 'test': 1}
                 else:
                     lookup[key] = {'train': 0, 'test': 1}
         
@@ -84,37 +105,35 @@ def load_dataset_splits(dataset_path):
 def parse_arguments():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="Compare Whisper Large V3 vs fine-tuned model on LangAge dataset"
+        description="Compare Whisper Large V3 vs fine-tuned model with comprehensive analysis"
     )
     
     # Required arguments
     parser.add_argument(
         "--input", "-i",
         type=str,
-        required=True,
-        help="Path to input directory (data/LangAge16kHz)"
+        default="data/ESLOLangAgeCombined16kHz",
+        help="Path to input audio directory (default: data/ESLOLangAgeCombined16kHz)"
     )
     parser.add_argument(
         "--output", "-o",
         type=str,
         required=True,
-        help="Path to output directory (e.g., results/largeV3.1)"
+        help="Path to output directory (e.g., results/comparison_output)"
     )
     parser.add_argument(
         "--fine_tuned_model",
         type=str,
         required=True,
-        help="Path to fine-tuned Whisper model directory"
+        help="Full path to fine-tuned Whisper model including checkpoint (e.g., FrisperWhisper/ESLOLangAgeCombined/checkpoint-4000)"
     )
+    
+    # Dataset for train/test lookup
     parser.add_argument(
-        "--checkpoint",
+        "--dataset",
         type=str,
-        help="Specific checkpoint to use (e.g., 'checkpoint-6000'). If not specified, uses the final model."
-    )
-    parser.add_argument(
-        "--dataset_path",
-        type=str,
-        help="Path to the HuggingFace dataset (optional). If provided, adds 'train' and 'test' columns to output CSV."
+        default="data/ESLOLangAgeDataSet",
+        help="Path to HuggingFace dataset for train/test lookup (default: data/ESLOLangAgeDataSet)"
     )
     
     # Processing arguments
@@ -127,8 +146,8 @@ def parse_arguments():
     parser.add_argument(
         "--gpus",
         type=int,
-        default=1,
-        help="Number of GPUs to use (default: 1)"
+        default=2,
+        help="Number of GPUs to use (default: 2)"
     )
     parser.add_argument(
         "--batch_size",
@@ -179,101 +198,6 @@ def load_intermediate_results(filepath):
         return json.load(f)
 
 
-def create_readme(output_dir, args, start_time):
-    """Create README.md with execution details."""
-    readme_path = output_dir / "README.md"
-    
-    from datetime import datetime
-    
-    content = f"""# Whisper Model Comparison Results
-
-## Execution Details
-
-**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  
-**Script:** run_whisper_comparison_pipeline.py  
-**Duration:** Started at {datetime.fromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S')}  
-
-## Command Line Arguments
-
-```bash
-python scripts/run_whisper_comparison_pipeline.py \\
-  --input "{args.input}" \\
-  --output "{args.output}" \\
-  --fine_tuned_model "{args.fine_tuned_model}" \\"""
-
-    if args.checkpoint:
-        content += f"""
-  --checkpoint "{args.checkpoint}" \\"""
-    
-    content += f"""
-  --cpus {args.cpus} \\
-  --gpus {args.gpus} \\
-  --batch_size {args.batch_size} \\
-  --transcription_batch_processes {args.transcription_batch_processes} \\
-  --steps "{args.steps}"\\"""
-
-    if args.file_limit:
-        content += f"""
-  --file_limit {args.file_limit} \\"""
-    
-    if args.resume_from_transcriptions:
-        content += f"""
-  --resume_from_transcriptions "{args.resume_from_transcriptions}" \\"""
-    
-    content = content.rstrip(" \\")  # Remove trailing backslash
-    
-    content += f"""
-```
-
-## Configuration Summary
-
-- **Input Directory:** `{args.input}`
-- **Output Directory:** `{args.output}`
-- **Fine-tuned Model:** `{args.fine_tuned_model}`
-- **Checkpoint:** `{args.checkpoint if args.checkpoint else 'final model'}`
-- **Processing:** {args.cpus} CPUs, {args.gpus} GPUs{' (Multi-GPU Support)' if args.gpus > 1 else ''}
-- **Batch Size:** {args.batch_size}
-- **Transcription Processes:** {args.transcription_batch_processes}
-- **Pipeline Steps:** {args.steps}
-{f"- **File Limit:** {args.file_limit}" if args.file_limit else ""}
-{f"- **Resume From:** `{args.resume_from_transcriptions}`" if args.resume_from_transcriptions else ""}
-
-## Multi-GPU Support
-
-{f'This pipeline includes multi-GPU parallel processing support. With {args.gpus} GPUs configured, the workload is automatically distributed across all available GPUs for faster processing.' if args.gpus > 1 else 'Single-GPU processing mode.'}
-
-## Output Files
-
-- **Main Results:** `whisper_comparison_results.csv`
-- **Sample Results:** `whisper_comparison_results_sample.csv` (first 100 rows)
-- **Intermediate Files:** `whisper_comparison_results_intermediate/`
-  - `segments_with_metadata.json`
-  - `segments_with_transcriptions.json`
-
-## Pipeline Steps
-
-1. **Metadata Extraction:** Extract audio segments and speaker information
-2. **Transcription:** Transcribe with both Whisper Large V3 and fine-tuned model
-3. **Metrics Calculation:** Calculate WER, CER, and BLEU scores
-4. **Results Export:** Create comprehensive CSV with all comparisons
-
-## Metrics Included
-
-- **WER (Word Error Rate):** Lower is better
-- **CER (Character Error Rate):** Lower is better  
-- **BLEU Score:** Higher is better
-
-Comparisons are made between:
-- Large V3 vs Original transcripts
-- Fine-tuned vs Original transcripts
-- Large V3 vs Fine-tuned transcripts
-"""
-    
-    print(f"Creating README.md: {readme_path}")
-    with open(readme_path, 'w', encoding='utf-8') as f:
-        f.write(content)
-
-
 def progress_callback(current, total):
     """Progress callback for transcription."""
     percentage = (current / total) * 100
@@ -321,21 +245,17 @@ def run_transcription(segments, args):
     print("STEP 2: TRANSCRIPTION")
     print("="*60)
     
-    # Determine model path (with checkpoint if specified)
-    if args.checkpoint:
-        fine_tuned_model_path = os.path.join(args.fine_tuned_model, args.checkpoint)
-        if not os.path.exists(fine_tuned_model_path):
-            print(f"Checkpoint not found: {fine_tuned_model_path}")
-            sys.exit(1)
-        print(f"Using checkpoint: {args.checkpoint}")
-    else:
-        fine_tuned_model_path = args.fine_tuned_model
-        print(f"Using final model (no checkpoint specified)")
+    # Validate that fine-tuned model path exists
+    if not os.path.exists(args.fine_tuned_model):
+        print(f"Error: Fine-tuned model not found: {args.fine_tuned_model}")
+        sys.exit(1)
+    
+    print(f"Using fine-tuned model: {args.fine_tuned_model}")
     
     # Transcribe with both models
     large_v3_results, fine_tuned_results = transcribe_with_both_models(
         segments,
-        fine_tuned_model_path,
+        args.fine_tuned_model,
         batch_size=args.batch_size,
         num_workers=args.transcription_batch_processes,
         progress_callback=progress_callback,
@@ -505,15 +425,12 @@ def main():
     # Parse arguments
     args = parse_arguments()
     
-    print("WHISPER MODEL COMPARISON PIPELINE")
+    print("WHISPER MODEL COMPARISON PIPELINE (CONSOLIDATED)")
     print("="*60)
     print(f"Input directory: {args.input}")
     print(f"Output directory: {args.output}")
     print(f"Fine-tuned model: {args.fine_tuned_model}")
-    if args.checkpoint:
-        print(f"Checkpoint: {args.checkpoint}")
-    else:
-        print(f"Checkpoint: final model")
+    print(f"Dataset path: {args.dataset}")
     print(f"Configuration: {args.cpus} CPUs, {args.gpus} GPUs, batch size {args.batch_size}")
     print(f"Steps to run: {args.steps}")
     
@@ -525,23 +442,6 @@ def main():
     if not os.path.exists(args.fine_tuned_model):
         print(f"Fine-tuned model directory not found: {args.fine_tuned_model}")
         sys.exit(1)
-    
-    # Validate checkpoint if specified
-    if args.checkpoint:
-        checkpoint_path = os.path.join(args.fine_tuned_model, args.checkpoint)
-        if not os.path.exists(checkpoint_path):
-            print(f"Checkpoint not found: {checkpoint_path}")
-            # List available checkpoints
-            try:
-                checkpoints = [d for d in os.listdir(args.fine_tuned_model) 
-                             if d.startswith('checkpoint-') and os.path.isdir(os.path.join(args.fine_tuned_model, d))]
-                if checkpoints:
-                    print(f"Available checkpoints: {sorted(checkpoints)}")
-                else:
-                    print("No checkpoints found in model directory")
-            except:
-                pass
-            sys.exit(1)
     
     # Create output directory
     output_dir = Path(args.output)
@@ -558,17 +458,12 @@ def main():
     segments_file = intermediate_dir / "segments_with_metadata.json"
     transcriptions_file = intermediate_dir / "segments_with_transcriptions.json"
     
-    # Create README.md with execution details
-    create_readme(output_dir, args, start_time)
-    
-    # Load dataset for train/test membership (if provided)
-    dataset_lookup = None
-    if args.dataset_path:
-        dataset_lookup = load_dataset_splits(args.dataset_path)
-        if dataset_lookup:
-            print(f"✓ Dataset loaded successfully for train/test tracking")
-        else:
-            print(f"✗ Could not load dataset, train/test columns will be 0")
+    # Load dataset for train/test membership
+    dataset_lookup = load_dataset_splits(args.dataset)
+    if dataset_lookup:
+        print(f"✓ Dataset loaded successfully for train/test tracking")
+    else:
+        print(f"✗ Could not load dataset, train/test columns will be 0")
     
     try:
         # Step 1: Metadata extraction
@@ -629,7 +524,6 @@ def main():
             print(f"Main results: {csv_file}")
             print(f"Sample results: {sample_csv_file}")
         print(f"Intermediate files: {intermediate_dir}")
-        print(f"Documentation: {output_dir / 'README.md'}")
         
     except KeyboardInterrupt:
         print(f"\nPipeline interrupted by user")

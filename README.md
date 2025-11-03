@@ -26,6 +26,20 @@ Dieses Projekt ermöglicht die Transkription französischer Audioaufnahmen mit f
 - **CSV-Export** mit Zeitstempel-Informationen und Metadaten
 - **SLURM-Integration** für Cluster-Processing
 
+### Verfügbare Modelle und Datensätze
+
+**Hugging Face Modell:**
+- **FrWhisper**: https://huggingface.co/aihpi/FrWhisper
+  - Fine-tuned Whisper Large V3 für französische Konversationssprache
+  - Optimiert für Interjektionen, Zögern und natürliche Sprachmuster
+  - 14.18 Prozentpunkte WER-Verbesserung gegenüber Base-Modell
+
+**Hugging Face Datensatz:**
+- **FrWhisper Dataset**: https://huggingface.co/datasets/aihpi/FrWhisper-dataset
+  - Trainingsdaten aus LangAge + ESLO Korpora
+  - 114.217 Samples (91.374 Training + 22.843 Test)
+  - Französische Konversationssprache mit erhaltenen Interjektionen
+
 ---
 
 ## 2. Installation und Setup

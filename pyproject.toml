@@ -52,6 +52,7 @@ dependencies = [
     "num2words>=0.5.14",
     "matplotlib>=3.10.6",
     "seaborn>=0.13.2",
+    "huggingface-hub>=0.34.3",
 ]
 
 [project.optional-dependencies]
